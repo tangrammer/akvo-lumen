@@ -45,13 +45,6 @@ export default class TableHeaderCell extends Component {
                 this.toggleChangeDatatypeContextMenu();
               }}
             >
-            <DataTypeContextMenu
-              column={column}
-              style={{zIndex:1000000, overflow: 'visible'}}
-              onSelect={(col, value) => {
-                this.toggleChangeDatatypeContextMenu();
-              }}
-            />
               {column.get('type')}
             </span>
           </span>

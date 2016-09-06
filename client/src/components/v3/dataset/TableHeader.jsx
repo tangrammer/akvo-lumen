@@ -19,7 +19,7 @@ export default class TableHeader extends Component {
           scrollLeft={scrollLeft}
           style={{ overflowX: 'hidden' }}
           width={width}
-          height={200}
+          height={60}
           columnWidth={200}
           rowHeight={60}
           columnCount={columns.size}
