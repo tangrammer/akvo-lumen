@@ -32,7 +32,7 @@ class Dataset extends Component {
     require.ensure([], () => {
       /* eslint-disable global-require */
       const DatasetHeader = require('../components/dataset/DatasetHeader').default;
-      const DatasetTable = require('../components/dataset/DatasetTable').default;
+      const DatasetTable = require('../components/v3/dataset/DatasetTable').default;
       /* eslint-enable global-require */
 
       this.setState({
@@ -73,6 +73,7 @@ class Dataset extends Component {
         />
         {getRows(dataset) != null &&
           <DatasetTable
+            id={dataset.get('id')}
             columns={getColumns(dataset)}
             rows={getRows(dataset)}
             transformations={getTransformations(dataset)}

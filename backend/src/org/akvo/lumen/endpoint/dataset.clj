@@ -12,20 +12,31 @@
 (hugsql/def-db-fns "org/akvo/lumen/endpoint/dataset.sql")
 (hugsql/def-db-fns "org/akvo/lumen/job-execution.sql")
 
-(defn select-data-sql [table-name columns]
-  (let [column-names (map #(get % "columnName") columns)
-        f (fn [m] (get m "sort"))
-        sort-columns (conj
-                      (vec
-                       (for [c (sort-by f (filter f columns))]
-                         (str (get c "columnName") " " (get c "direction"))))
-                      "rnum")
-        order-by-expr (str/join "," sort-columns)
-        sql (format "SELECT %s FROM %s ORDER BY %s"
-                    (str/join "," column-names)
-                    table-name
-                    order-by-expr)]
-    sql))
+(defn select-data-sql
+  ([table-name columns]
+   (select-data-sql table-name columns nil nil))
+  ([table-name columns limit offset]
+   (let [column-names (map #(get % "columnName") columns)
+         f (fn [m] (get m "sort"))
+         sort-columns (conj
+                       (vec
+                        (for [c (sort-by f (filter f columns))]
+                          (str (get c "columnName") " " (get c "direction"))))
+                       "rnum")
+         order-by-expr (str "ORDER BY " (str/join "," sort-columns))
+         limit-expr (if limit
+                      (str "LIMIT " (Integer/parseInt limit))
+                      "")
+         offset-expr (if offset
+                       (str "OFFSET " (Integer/parseInt offset))
+                       "")
+         sql (format "SELECT %s FROM %s %s %s %s"
+                     (str/join "," column-names)
+                     table-name
+                     order-by-expr
+                     limit-expr
+                     offset-expr)]
+     sql)))
 
 (defn find-dataset [conn id]
   (when-let [dataset (dataset-by-id conn {:id id})]
@@ -40,6 +51,15 @@
        :status "OK"
        :transformations (:transformations dataset)
        :columns columns
+       :rows data})))
+
+(defn find-dataset-rows [conn id limit offset]
+  (when-let [dataset (dataset-by-id conn {:id id})]
+    (let [columns (remove #(get % "hidden") (:columns dataset))
+          data (rest (jdbc/query conn
+                                 [(select-data-sql (:table-name dataset) columns limit offset)]
+                                 {:as-arrays? true}))]
+      {:id id
        :rows data})))
 
 
@@ -57,6 +77,11 @@
         (GET "/" _
           (if-let [dataset (find-dataset tenant-conn id)]
             (response dataset)
+            (not-found {:id id})))
+
+        (GET "/rows" _
+          (if-let [dataset-rows (find-dataset-rows tenant-conn id (:limit params) (:offset params))]
+            (response dataset-rows)
             (not-found {:id id})))
 
         (DELETE "/" _
