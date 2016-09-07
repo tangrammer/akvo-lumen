@@ -58,7 +58,10 @@ export default class DatasetTable extends Component {
     const { rows, transformationLogSidebarOpen } = this.state;
 
     return (
-      <div style={{ height: '80%' }}>
+      <div
+        className="DatasetTable"
+        style={{ height: '80%' }}
+      >
         <DatasetControls
           onToggleTransformationLog={this.toggleTransformationLog}
           onClickMenuItem={() => null}

@@ -1,6 +1,7 @@
 @import 'modules/colors';
 
 .DatasetTable {
+  /*
   .wrapper {
     height: calc(100vh - 8rem);
     .public_fixedDataTableCell_main {
@@ -14,5 +15,13 @@
   }
   .ColumnHeader {
     position: relative;
+  }
+  */
+  /* Override inlined "overflow: hidden" values so context menus work */
+  .TableHeader {
+    .Grid, .Grid__innerScrollContainer {
+      overflow: initial !important;
+      z-index: 1;
+    }
   }
 }
