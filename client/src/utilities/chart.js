@@ -3,6 +3,7 @@ import getVegaScatterSpec from './vega-specs/Scatter';
 import getVegaPieSpec from './vega-specs/Pie';
 import getVegaAreaSpec from './vega-specs/Area';
 import getVegaBarSpec from './vega-specs/Bar';
+import getVegaAutoSpec from './vega-specs/Auto';
 
 const getFilterValues = (filters, row) => filters.map((filter) => {
   const value = row.get(filter.column);
@@ -37,16 +38,31 @@ export function getChartData(visualisation, datasets) {
   const columnIndexY = spec.datasetColumnY;
   const nameDataX = spec.datasetNameColumnX != null ?
     dataset.get('rows').map(row => row.get(spec.datasetNameColumnX)).toArray() : null;
+
   const nameDataXType = spec.datasetNameColumnXType;
+
   const aggregationValuesX = spec.datasetGroupColumnX != null ?
     dataset.get('rows').map(row => row.get(spec.datasetGroupColumnX)).toArray() : null;
+
   const sortDataX = spec.datasetSortColumnX != null ?
     dataset.get('rows').map(row => row.get(spec.datasetSortColumnX)).toArray() : null;
-  const dataX = dataset.get('rows').map(row => row.get(columnIndexX)).toArray();
+
+
+  const colorValues = spec.colorColumn != null ?
+    dataset.get('rows').map(row => row.get(spec.colorColumn)).toArray() : null;
+
+  const sizeValues = spec.sizeColumn != null ?
+    dataset.get('rows').map(row => row.get(spec.sizeColumn)).toArray() : null;
+
+  const dataX = dataset.get('rows').map(row => row.get(columnIndexY)).toArray();
+
   const dataXType = spec.datasetColumnXType;
-  const dataY = columnIndexY != null ?
-    dataset.get('rows').map(row => row.get(columnIndexY)).toArray() : null;
+
+  const dataY = columnIndexX !== null ?
+    dataset.get('rows').map(row => row.get(columnIndexX)).toArray() : null;
+
   const dataYType = spec.datasetColumnYType;
+
   let dataValues = [];
   let output = [];
 
@@ -72,10 +88,42 @@ export function getChartData(visualisation, datasets) {
       break;
 
     case 'bar':
-    case 'line':
-    case 'area':
-    case 'pie':
-    case 'donut':
+    case 'auto':
+
+      /* if (vType === 'auto' && visualisation.spec.datasetColumnX !== null && visualisation.spec.datasetColumnY !== null) {
+        dataValues = dataX.map((entry, index) => {
+          let label = nameDataX ? nameDataX[index] : null;
+          label = nameDataXType === 'date' ? parseFloat(label) * 1000 : label;
+
+          let aggregationValue = aggregationValuesX ? aggregationValuesX[index] : null;
+          aggregationValue = spec.datasetGroupColumnXType === 'date' ?
+            parseFloat(aggregationValue) * 1000 : aggregationValue;
+
+          const row = dataset.get('rows').get(index);
+          const filterValues = getFilterValues(filters, row);
+          const x = dataXType === 'date' ? parseFloat(entry) * 1000 : entry;
+          const y = dataYType === 'date' ? parseFloat(dataY[index]) * 1000 : parseFloat(dataY[index]);
+
+          let colorValue = colorValues ? parseFloat(colorValues[index]) : null;
+          let sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
+
+          return ({
+            x,
+            y,
+            label,
+            aggregationValue,
+            filterValues,
+            colorValue,
+            sizeValue
+          });
+        });
+
+        output = {
+          values: dataValues,
+        };
+        break;
+      }
+      */
 
       dataValues = dataX.map((entry, index) => {
         const key = index;
@@ -111,6 +159,9 @@ export function getChartData(visualisation, datasets) {
           sortValue = sortValue.toString();
         }
 
+        let colorValue = colorValues ? parseFloat(colorValues[index]) : null;
+        let sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
+
         let aggregationValue = aggregationValuesX ? aggregationValuesX[index] : null;
         aggregationValue = spec.datasetGroupColumnXType === 'date' ?
           parseFloat(aggregationValue) * 1000 : aggregationValue;
@@ -122,6 +173,8 @@ export function getChartData(visualisation, datasets) {
           aggregationValue,
           sortValue,
           filterValues,
+          colorValue,
+          sizeValue,
         });
       });
 
@@ -159,6 +212,112 @@ export function getChartData(visualisation, datasets) {
 
       break;
 
+    case 'pie':
+    case 'donut':
+
+        dataValues = dataX.map((entry, index) => {
+        const key = index;
+        const row = dataset.get('rows').get(index);
+
+        /* filterValues is an array of cell values in the correct order to be tested by the array of
+        /* filters for this visualisation. I.e. each value in this array is determined by the column
+        /* specified in the filter at that index in the filter array. */
+        const filterValues = getFilterValues(filters, row);
+
+        let label;
+
+        if (nameDataX) {
+          if (vType === 'bar' || vType === 'pie' || vType === 'donut') {
+            label = nameDataX[key];
+            if (nameDataXType === 'date') {
+              label = moment.unix(label).format('YYYY-MM-DD hh:mm');
+            } else if (nameDataXType === 'number') {
+              label = parseFloat(label);
+            } else if (nameDataXType === 'text') {
+              label = label.toString();
+            }
+          }
+        }
+
+        let sortValue = sortDataX ? sortDataX[index] : null;
+
+        if (spec.datasetSortColumnXType === 'date') {
+          sortValue = parseFloat(sortValue) * 1000;
+        } else if (spec.datasetSortColumnXType === 'number') {
+          sortValue = parseFloat(sortValue);
+        } else if (spec.datasetSortColumnXType === 'text') {
+          sortValue = sortValue.toString();
+        }
+
+        let colorValue = colorValues ? parseFloat(colorValues[index]) : null;
+        let sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
+
+        let aggregationValue = entry;
+        aggregationValue = spec.datasetColumnXType === 'date' ?
+          parseFloat(aggregationValue) * 1000 : aggregationValue;
+
+        return ({
+          x: key,
+          y: parseFloat(entry),
+          label,
+          aggregationValue,
+          sortValue,
+          filterValues,
+          colorValue,
+        });
+      });
+
+
+      output = {
+        values: dataValues,
+      };
+
+    break;
+
+    case 'line':
+    case 'area':
+
+      dataValues = dataX.map((entry, index) => {
+        let label = nameDataX ? nameDataX[index] : null;
+        label = nameDataXType === 'date' ? parseFloat(label) * 1000 : label;
+
+        let aggregationValue = aggregationValuesX ? aggregationValuesX[index] : null;
+        aggregationValue = spec.datasetGroupColumnXType === 'date' ?
+          parseFloat(aggregationValue) * 1000 : aggregationValue;
+
+        const row = dataset.get('rows').get(index);
+        const filterValues = getFilterValues(filters, row);
+        const y = parseFloat(entry);
+
+        let x;
+        if (columnIndexX !== null) {
+          x = parseFloat(dataY[index]);
+          if (dataXType === 'date') {
+            x = x * 1000;
+          }
+        } else {
+          x = index;
+        }
+
+        return ({
+          x,
+          y,
+          label,
+          aggregationValue,
+          filterValues,
+        });
+      });
+
+      dataValues.sort((a, b) => {
+        return a.x - b.x;
+      });
+
+      output = {
+        values: dataValues,
+      };
+
+    break;
+
     case 'scatter':
 
       dataValues = dataX.map((entry, index) => {
@@ -174,12 +333,17 @@ export function getChartData(visualisation, datasets) {
         const x = dataXType === 'date' ? parseFloat(entry) * 1000 : parseFloat(entry);
         const y = dataYType === 'date' ? parseFloat(dataY[index]) * 1000 : parseFloat(dataY[index]);
 
+        let colorValue = colorValues ? parseFloat(colorValues[index]) : null;
+        let sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
+
         return ({
-          x,
-          y,
+          x: y,
+          y: x,
           label,
           aggregationValue,
           filterValues,
+          colorValue,
+          sizeValue,
         });
       });
 
@@ -270,6 +434,10 @@ export function getVegaSpec(visualisation, data, containerHeight, containerWidth
   let vspec;
 
   switch (visualisationType) {
+    case 'auto':
+      vspec = getVegaAutoSpec(visualisation, data, containerHeight, containerWidth);
+      break;
+
     case 'bar':
       vspec = getVegaBarSpec(visualisation, data, containerHeight, containerWidth);
       break;

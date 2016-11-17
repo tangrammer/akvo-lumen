@@ -20,7 +20,7 @@ class Visualisation extends Component {
       visualisation: {
         type: 'visualisation',
         name: 'Untitled Chart',
-        visualisationType: null,
+        visualisationType: 'bar',
         datasetId: null,
         spec: {
           filters: [],
@@ -42,6 +42,10 @@ class Visualisation extends Component {
           labelY: null,
           minY: null,
           maxY: null,
+          colorColumn: null,
+          sizeColumn: null,
+          sortOption: 'none',
+          colorAggregationType: 'mean',
         },
       },
       asyncComponents: null,

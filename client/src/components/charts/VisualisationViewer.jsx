@@ -10,6 +10,24 @@ export default function VisualisationViewer(props) {
     case 'donut':
     case 'pie':
     case 'scatter':
+    case 'auto':
+      if (props.visualisation.datasetId === null) {
+        return null;
+      }
+
+      if (props.visualisation.spec.datasetColumnX === null
+        && props.visualisation.spec.datasetColumnY === null) {
+        return(
+          <span
+            style={{
+              display: 'flex',
+              flex: '1',
+              justifyContent: 'center',
+              alignSelf: 'center',
+            }}
+          > Choose a column to get started </span>
+        )
+      }
       return (
         <Chart
           {...props}

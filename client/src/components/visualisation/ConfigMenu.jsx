@@ -1,10 +1,13 @@
-import React, { PropTypes } from 'react';
+import React, { Component, PropTypes } from 'react';
 import Immutable from 'immutable';
 import SelectMenu from '../common/SelectMenu';
 import SelectInput from './configMenu/SelectInput';
 import LabelInput from './configMenu/LabelInput';
 import FilterMenu from './configMenu/FilterMenu';
 import * as entity from '../../domain/entity';
+import VisualisationTypeMenu from './VisualisationTypeMenu';
+
+const redColor = 'rgba(255, 0,0,0.1)';
 
 
 const sortFunction = (a, b) => {
@@ -41,6 +44,18 @@ const getColumnType = (index, options) => {
 
   return columnType;
 };
+
+const getColColor = (index, spec) => {
+  let count = 0;
+
+  [spec.datasetColumnX, spec.datasetColumnY, spec.colorColumn, spec.sizeColumn].forEach(num => {
+    if (num === index) ++count;
+  });
+
+  if (count === 0) return('#f1f2f2');
+
+  return `rgba(43, 182, 115, ${count * 0.25})`
+}
 
 const Subtitle = ({ children }) => (
   <h3 className="subtitle">{children}</h3>
@@ -95,6 +110,30 @@ const aggregationOptions = [
     label: 'upper quartile',
   },
 ];
+
+const getTitle = (columnOptions, id) => {
+  let out;
+
+  columnOptions.forEach(item => {
+    if (item.value === id) {
+      out = item.title;
+    }
+  });
+
+  return out;
+}
+
+const getType = (columnOptions, id) => {
+  let out;
+
+  columnOptions.forEach(item => {
+    if (item.value === id) {
+      out = item.type;
+    }
+  });
+
+  return out;
+}
 
 const ColumnGroupingInput = ({ spec, columnOptions, onChangeSpec }) => (
   <div
@@ -157,6 +196,20 @@ const AggregationInput = ({ spec, onChangeSpec }) => (
   />
 );
 
+const ColorAggregationInput = ({ spec, onChangeSpec }) => (
+  <SelectInput
+    placeholder="Choose color metric aggregation..."
+    labelText={aggregationColumnLabelText}
+    choice={spec.colorAggregationType !== null ?
+      spec.colorAggregationType.toString() : null}
+    name="yAggregationMenu"
+    options={aggregationOptions}
+    onChange={value => onChangeSpec({
+      colorAggregationType: value,
+    })}
+  />
+);
+
 AggregationInput.propTypes = {
   spec: PropTypes.object.isRequired,
   onChangeSpec: PropTypes.func.isRequired,
@@ -206,305 +259,154 @@ SortInput.propTypes = {
   onChangeSpec: PropTypes.func.isRequired,
 };
 
-export default function ConfigMenu(props) {
-  const datasetArray = getDatasetArray(props.datasets);
-  const datasetOptions = getDatasetOptions(datasetArray);
-  const visualisation = props.visualisation;
-  const onChangeSpec = props.onChangeVisualisationSpec;
-  const spec = visualisation.spec;
+export default class ConfigMenu extends Component {
+  constructor() {
+    super();
+  }
 
-  const columns = props.datasets[visualisation.datasetId] ?
-    props.datasets[visualisation.datasetId].get('columns') : Immutable.List();
-  const columnOptions = getSelectMenuOptionsFromColumnList(columns);
+  render() {
+    const props = this.props;
+    const datasetArray = getDatasetArray(props.datasets);
+    const datasetOptions = getDatasetOptions(datasetArray);
+    const visualisation = props.visualisation;
+    const onChangeSpec = props.onChangeVisualisationSpec;
+    const spec = visualisation.spec;
 
-  const getComponents = (visualisationType) => {
-    let output;
-    switch (visualisationType) {
+    const columns = props.datasets[visualisation.datasetId] ?
+      props.datasets[visualisation.datasetId].get('columns') : Immutable.List();
+    const columnOptions = getSelectMenuOptionsFromColumnList(columns);
 
-      case 'bar':
-        output = (
-          <div>
-            <Subtitle>Y-Axis</Subtitle>
-            <SelectInput
-              placeholder={datasetColumnPlaceholder}
-              labelText={datasetColumnLabelText}
-              choice={spec.datasetColumnX !== null ? spec.datasetColumnX.toString() : null}
-              name="xColumnInput"
-              options={columnOptions}
-              onChange={value => onChangeSpec({
-                datasetColumnX: value,
-                datasetColumnXType: getColumnType(value, columnOptions),
-              })}
-            />
-            <AggregationInput
-              spec={spec}
-              onChangeSpec={onChangeSpec}
-            />
-            <LabelInput
-              value={spec.labelY !== null ? spec.labelY.toString() : null}
-              placeholder="Y Axis label"
-              name="yLabel"
-              onChange={event => onChangeSpec({
-                labelY: event.target.value.toString(),
-              })}
-            />
-            <Subtitle>X-Axis</Subtitle>
-            <ColumnGroupingInput
-              spec={spec}
-              columnOptions={columnOptions}
-              onChangeSpec={onChangeSpec}
-            />
-            <SortInput
-              spec={spec}
-              columnOptions={columnOptions}
-              onChangeSpec={onChangeSpec}
-            />
-            <LabelInput
-              value={spec.labelX !== null ? spec.labelX.toString() : null}
-              placeholder="X Axis label"
-              name="xLabel"
-              onChange={event => onChangeSpec({
-                labelX: event.target.value.toString(),
-              })}
+    return (
+      <div
+        className="ConfigMenu"
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+        }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          props.setRootState({
+            draggedColumn: null,
+          });
+        }}
+      >
+        <div
+          className="column1"
+          style={{
+            flex: 1,
+            borderRight: '1px solid whitesmoke',
+            paddingRight: '1rem',
+          }}
+        >
+          <h3>Visualisation</h3>
+          <VisualisationTypeMenu
+            visualisation={visualisation}
+            onChangeVisualisationType={this.props.onChangeVisualisationType}
+          />
+          <div className="inputGroup">
+            <label htmlFor="xDatasetMenu">Source dataset:</label>
+            <SelectMenu
+              name="xDatasetMenu"
+              placeholder="Choose dataset..."
+              value={visualisation.datasetId !== null ?
+                visualisation.datasetId.toString() : null}
+              options={datasetOptions}
+              onChange={props.onChangeSourceDataset}
             />
           </div>
-        );
-        break;
-
-      case 'line':
-      case 'area':
-        output = (
-          <div>
-            <Subtitle>Y-Axis</Subtitle>
-            <SelectInput
-              placeholder={datasetColumnPlaceholder}
-              labelText={datasetColumnLabelText}
-              choice={spec.datasetColumnX !== null ? spec.datasetColumnX.toString() : null}
-              name="xColumnInput"
-              options={columnOptions}
-              onChange={value => onChangeSpec({
-                datasetColumnX: value,
-                datasetColumnXType: getColumnType(value, columnOptions),
-              })}
-            />
-            <AggregationInput
-              spec={spec}
-              onChangeSpec={onChangeSpec}
-            />
-            <LabelInput
-              value={spec.labelY !== null ? spec.labelY.toString() : null}
-              placeholder="Y Axis label"
-              name="yLabel"
-              onChange={event => onChangeSpec({
-                labelY: event.target.value.toString(),
-              })}
-            />
-            <Subtitle>X-Axis</Subtitle>
-            <SelectInput
-              placeholder={groupColumnPlaceholder}
-              labelText={groupColumnLabelText}
-              choice={spec.datasetGroupColumnX !== null ?
-                spec.datasetGroupColumnX.toString() : null}
-              name="xGroupColumnMenu"
-              options={columnOptions}
-              clearable
-              onChange={value => onChangeSpec({
-                datasetGroupColumnX: value,
-                datasetGroupColumnXType: getColumnType(value, columnOptions),
-              })}
-            />
-            <SortInput
-              spec={spec}
-              columnOptions={columnOptions}
-              onChangeSpec={onChangeSpec}
-            />
-            <LabelInput
-              value={spec.labelX !== null ? spec.labelX.toString() : null}
-              placeholder="X Axis label"
-              name="xLabel"
-              onChange={event => onChangeSpec({
-                labelX: event.target.value.toString(),
-              })}
+          <FilterMenu
+            hasDataset={Boolean(visualisation.datasetId !== null)}
+            onChangeSpec={onChangeSpec}
+            spec={spec}
+            columnOptions={columnOptions}
+          />
+          <div className="inputGroup">
+            <label htmlFor="chartTitle">Chart title:</label>
+            <input
+              className="textInput"
+              type="text"
+              id="chartTitle"
+              placeholder="Untitled chart"
+              defaultValue={visualisation.name !== null ? visualisation.name.toString() : null}
+              onChange={props.onChangeTitle}
             />
           </div>
-        );
-        break;
+          {visualisation.datasetId !== null &&
+            <div>
+              <hr />
+              <h3
+                style={{
+                  marginBottom: '1rem',
+                }}
+              >
+                Columns
+              </h3>
+              <ul>
+                {columnOptions.map(item =>
+                  <li
+                    key={item.value}
+                    onDragStart={() => {
+                      props.setRootState({
+                        draggedColumn: item.value,
+                        draggedColumnType: item.type,
+                      });
+                    }}
+                    draggable
+                  >
+                    <h4
+                      className="clickable"
+                      style={{
+                        position: 'relative',
+                        backgroundColor: getColColor(item.value, visualisation.spec),
+                        padding: '0.5rem',
+                        borderRadius: '0.4rem',
+                        marginBottom: '0.5rem',
+                      }}
+                    >
+                      <span>
+                        {'[' + item.type + '] '}
+                      </span>
+                      <span>
+                        {item.title.length > 20 ? item.title.substring(0, 17) + '...' : item.title}
+                      </span>
+                    </h4>
+                  </li>
+                )}
+              </ul>
+            </div>
+          }
+        </div>
 
-      case 'scatter':
-        output = (
-          <div>
-            <Subtitle>Y-Axis</Subtitle>
-            <SelectInput
-              placeholder={datasetColumnPlaceholder}
-              labelText={datasetColumnLabelText}
-              choice={spec.datasetColumnY !== null ? spec.datasetColumnY.toString() : null}
-              name="yColumnInput"
-              options={columnOptions}
-              onChange={value => onChangeSpec({
-                datasetColumnY: value,
-                datasetColumnYType: getColumnType(value, columnOptions),
-              })}
-            />
-            <AggregationInput
-              spec={spec}
-              onChangeSpec={onChangeSpec}
-            />
-            <LabelInput
-              value={spec.labelY !== null ? spec.labelY.toString() : null}
-              placeholder="Y Axis label"
-              name="yLabel"
-              onChange={event => onChangeSpec({
-                labelY: event.target.value.toString(),
-              })}
-            />
-            <Subtitle>X-Axis</Subtitle>
-            <SelectInput
-              placeholder={datasetColumnPlaceholder}
-              labelText={datasetColumnLabelText}
-              choice={spec.datasetColumnX !== null ? spec.datasetColumnX.toString() : null}
-              name="xColumnInput"
-              options={columnOptions}
-              onChange={value => onChangeSpec({
-                datasetColumnX: value,
-                datasetColumnXType: getColumnType(value, columnOptions),
-              })}
-            />
-            <ColumnGroupingInput
-              spec={spec}
-              columnOptions={columnOptions}
-              onChangeSpec={onChangeSpec}
-            />
-            <LabelInput
-              value={spec.labelX !== null ? spec.labelX.toString() : null}
-              placeholder="X Axis label"
-              name="xLabel"
-              onChange={event => onChangeSpec({
-                labelX: event.target.value.toString(),
-              })}
-            />
-          </div>
-        );
-        break;
-
-      case 'map':
-        output = (
-          <div>
-            <Subtitle>Latitude</Subtitle>
-            <SelectInput
-              placeholder={datasetColumnPlaceholder}
-              labelText={datasetColumnLabelText}
-              choice={spec.datasetColumnY !== null ? spec.datasetColumnY.toString() : null}
-              name="yColumnInput"
-              options={columnOptions}
-              onChange={value => onChangeSpec({
-                datasetColumnY: value,
-                datasetColumnYType: getColumnType(value, columnOptions),
-              })}
-            />
-            <Subtitle>Longitude</Subtitle>
-            <SelectInput
-              placeholder={datasetColumnPlaceholder}
-              labelText={datasetColumnLabelText}
-              choice={spec.datasetColumnX !== null ? spec.datasetColumnX.toString() : null}
-              name="xColumnInput"
-              options={columnOptions}
-              onChange={value => onChangeSpec({
-                datasetColumnX: value,
-                datasetColumnXType: getColumnType(value, columnOptions),
-              })}
-            />
-            <Subtitle>Popup Label</Subtitle>
-            <SelectInput
-              placeholder={labelColumnPlaceholder}
-              labelText={labelColumnLabelText}
-              choice={spec.datasetNameColumnX !== null ? spec.datasetNameColumnX.toString() : null}
-              name="xNameColumnMenu"
-              options={columnOptions}
-              clearable
-              onChange={value => onChangeSpec({
-                datasetNameColumnX: value,
-                datasetNameColumnXType: getColumnType(value, columnOptions),
-              })}
-            />
-          </div>
-        );
-        break;
-
-      case 'pie':
-      case 'donut':
-        output = (
-          <div>
-            <SelectInput
-              placeholder={datasetColumnPlaceholder}
-              labelText={datasetColumnLabelText}
-              choice={spec.datasetColumnX !== null ? spec.datasetColumnX.toString() : null}
-              name="xColumnInput"
-              options={columnOptions}
-              onChange={value => onChangeSpec({
-                datasetColumnX: value,
-                datasetColumnXType: getColumnType(value, columnOptions),
-              })}
-            />
-            <AggregationInput
-              spec={spec}
-              onChangeSpec={onChangeSpec}
-            />
-            <ColumnGroupingInput
-              spec={spec}
-              columnOptions={columnOptions}
-              onChangeSpec={onChangeSpec}
-            />
-            <SortInput
-              spec={spec}
-              columnOptions={columnOptions}
-              onChangeSpec={onChangeSpec}
-            />
-          </div>
-        );
-        break;
-
-      default:
-        throw new Error('Invalid visualisation type');
-    }
-
-    return output;
-  };
-
-  return (
-    <div className="ConfigMenu">
-      <div className="inputGroup">
-        <label htmlFor="xDatasetMenu">Source dataset:</label>
-        <SelectMenu
-          name="xDatasetMenu"
-          placeholder="Choose dataset..."
-          value={visualisation.datasetId !== null ?
-            visualisation.datasetId.toString() : null}
-          options={datasetOptions}
-          onChange={props.onChangeSourceDataset}
-        />
+        <div
+          className="column2"
+          style={{
+            flex: 1,
+            paddingLeft: '1rem',
+          }}
+        >
+          {visualisation.datasetId !== null &&
+            <div>
+              <PlacementMenu
+                columnOptions={columnOptions}
+                {...this.props}
+              />
+            </div>
+          }
+        </div>
       </div>
-      <FilterMenu
-        hasDataset={Boolean(visualisation.datasetId !== null)}
-        onChangeSpec={onChangeSpec}
-        spec={spec}
-        columnOptions={columnOptions}
-      />
-      <div className="inputGroup">
-        <label htmlFor="chartTitle">Chart title:</label>
-        <input
-          className="textInput"
-          type="text"
-          id="chartTitle"
-          placeholder="Untitled chart"
-          defaultValue={visualisation.name !== null ? visualisation.name.toString() : null}
-          onChange={props.onChangeTitle}
-        />
-      </div>
-      {visualisation.datasetId &&
-        getComponents(visualisation.visualisationType)
-      }
-    </div>
-  );
+    );
+  }
+}
+
+const getDragTargetColor = (itemType, validTypes) => {
+  let color;
+  let flag;
+
+  flag = validTypes.indexOf(itemType) > -1;
+
+  color = flag ? 'rgba(0,255,0,0.1)' : 'rgba(255, 0,0,0.1)';
+
+  return color;
 }
 
 Subtitle.propTypes = {
@@ -518,3 +420,460 @@ ConfigMenu.propTypes = {
   onChangeSourceDataset: PropTypes.func.isRequired,
   onChangeVisualisationSpec: PropTypes.func.isRequired,
 };
+
+class PlacementMenu extends Component {
+  render() {
+    const props = this.props;
+    const { columnOptions } = props;
+    const visualisation = props.visualisation;
+    const onChangeSpec = props.onChangeVisualisationSpec;
+    const spec = visualisation.spec;
+    const vType = visualisation.visualisationType;
+
+
+    const sizeMenu = (
+      <div>
+        <label>Size</label>
+        <div
+          style={{
+            border: '1px solid #f1f2f2',
+            borderRadius: '0.5rem',
+            padding: '0.5rem',
+            position: 'relative',
+            backgroundColor: props.rootState.draggedColumn != null ?
+              getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date'])
+              :
+              'transparent',
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            if (getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date']) === redColor) {
+              return false;
+            }
+            props.setRootState({
+              sizeColumn: props.rootState.draggedColumn,
+              draggedColumn: null,
+            })
+           onChangeSpec({
+              sizeColumn: props.rootState.draggedColumn,
+              sizeColumnType: getType(columnOptions, props.rootState.draggedColumn),
+              sizeTitle: getTitle(columnOptions, props.rootState.draggedColumn),
+            });
+          }}
+        >
+          {spec.sizeColumn !== null ?
+            <span>
+              {getTitle(columnOptions, props.rootState.sizeColumn)}
+              <span
+                style={{
+                  position: 'absolute',
+                  right: '0.5rem',
+                  cursor: 'pointer',
+                }}
+                onClick={()=> {
+                  props.setRootState({
+                    sizeColumn: null,
+                  });
+                  onChangeSpec({
+                    sizeColumn: null,
+                    sizeColumnType: null,
+                    sizeColumnTitle: null,
+                  })
+                }}
+              >x</span>
+            </span>
+            :
+            <span
+              style={{
+                color: 'grey',
+              }}
+            >
+              Drag column for size
+            </span>
+          }
+        </div>
+      </div>
+    );
+
+    const colorMenu = (
+      <div>
+        <label>Color</label>
+        <div
+          style={{
+            border: '1px solid #f1f2f2',
+            borderRadius: '0.5rem',
+            padding: '0.5rem',
+            position: 'relative',
+            backgroundColor: props.rootState.draggedColumn != null ?
+              getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date'])
+              :
+              'transparent',
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            if (getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date']) === redColor) return false;
+            props.setRootState({
+              colorColumn: props.rootState.draggedColumn,
+              draggedColumn: null,
+            })
+           onChangeSpec({
+              colorColumn: props.rootState.draggedColumn,
+              colorColumnType: getType(columnOptions, props.rootState.draggedColumn),
+              colorTitle: getTitle(columnOptions, props.rootState.draggedColumn),
+            });
+          }}
+        >
+          {spec.colorColumn !== null ?
+            <span>
+              {getTitle(columnOptions, props.rootState.colorColumn)}
+              <span
+                style={{
+                  position: 'absolute',
+                  right: '0.5rem',
+                  cursor: 'pointer',
+                }}
+                onClick={()=> {
+                  props.setRootState({
+                    colorColumn: null,
+                  });
+                  onChangeSpec({
+                    colorColumn: null,
+                    colorColumnType: null,
+                    colorColumnTitle: null,
+                  })
+                }}
+              >x</span>
+            </span>
+            :
+            <span
+              style={{
+                color: 'grey',
+              }}
+            >
+              Drag column for color
+            </span>
+          }
+        </div>
+        {(vType === 'pie' && spec.colorColumn !== null) &&
+          <ColorAggregationInput
+            spec={spec}
+            onChangeSpec={onChangeSpec}
+          />
+        }
+      </div>
+    );
+
+    const labelMenu = (
+          <div>
+            <label>Bar labels</label>
+            <div
+              style={{
+                border: '1px solid #f1f2f2',
+                borderRadius: '0.5rem',
+                padding: '0.5rem',
+                position: 'relative',
+                backgroundColor: props.rootState.draggedColumn != null ?
+                  getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date', 'text'])
+                  :
+                  'transparent',
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                if (getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date', 'text']) === redColor) return false;
+                if (spec.datasetGroupColumnX !== null) {
+                  return false;
+                }
+                props.setRootState({
+                  datasetNameColumnX: props.rootState.draggedColumn,
+                  draggedColumn: null,
+                })
+               onChangeSpec({
+                  datasetNameColumnX: props.rootState.draggedColumn,
+                  datasetNameColumnXType: getType(columnOptions, props.rootState.draggedColumn),
+                  labelX: getTitle(columnOptions, props.rootState.draggedColumn),
+                });
+              }}
+            >
+              {spec.datasetGroupColumnX !== null ?
+                  <span
+                    style={{
+                      color: 'grey',
+                    }}
+                  >
+                    Showing "Group by" labels
+                  </span>
+                :
+                <div>
+                  {spec.datasetNameColumnX !== null ?
+                    <span>
+                      {getTitle(columnOptions, props.rootState.datasetNameColumnX)}
+                      <span
+                        style={{
+                          position: 'absolute',
+                          right: '0.5rem',
+                          cursor: 'pointer',
+                        }}
+                        onClick={()=> {
+                          props.setRootState({
+                            datasetNameColumnX: null,
+                          });
+                          onChangeSpec({
+                            datasetNameColumnX: null,
+                            datasetNameColumnXType: null,
+                            labelX: null,
+                          })
+                        }}
+                      >x</span>
+                    </span>
+                    :
+                    <span
+                      style={{
+                        color: 'grey',
+                      }}
+                    >
+                      Drag column for bar label
+                    </span>
+                  }
+                </div>
+            }
+            </div>
+          </div>
+        );
+
+  const groupColumnMenu = (
+    <div>
+      <label>Group by</label>
+      <div
+        style={{
+          border: '1px solid #f1f2f2',
+          borderRadius: '0.5rem',
+          padding: '0.5rem',
+          position: 'relative',
+          backgroundColor: props.rootState.draggedColumn != null ?
+            getDragTargetColor(props.rootState.draggedColumnType, ['text'])
+            :
+            'transparent',
+        }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          if (getDragTargetColor(props.rootState.draggedColumnType, ['text']) === redColor) return false;
+          props.setRootState({
+            datasetGroupColumnX: props.rootState.draggedColumn,
+            draggedColumn: null,
+          })
+         onChangeSpec({
+            datasetGroupColumnX: props.rootState.draggedColumn,
+            datasetGroupColumnXType: getType(columnOptions, props.rootState.draggedColumn),
+            labelX: getTitle(columnOptions, props.rootState.draggedColumn),
+          });
+        }}
+      >
+        {spec.datasetGroupColumnX !== null ?
+          <span>
+            {getTitle(columnOptions, props.rootState.datasetGroupColumnX)}
+            <span
+              style={{
+                position: 'absolute',
+                right: '0.5rem',
+                cursor: 'pointer',
+              }}
+              onClick={()=> {
+                props.setRootState({
+                  datasetGroupColumnX: null,
+                });
+                onChangeSpec({
+                  datasetGroupColumnX: null,
+                  datasetGroupColumnXType: null,
+                  labelX: null,
+                })
+              }}
+            >x</span>
+          </span>
+          :
+          <span
+            style={{
+              color: 'grey',
+            }}
+          >
+            Choose a column to group by
+          </span>
+        }
+      </div>
+      {spec.datasetGroupColumnX !== null &&
+        <AggregationInput
+          spec={spec}
+          onChangeSpec={onChangeSpec}
+        />
+      }
+    </div>
+  );
+
+    return (
+      <div>
+        <div>
+          <h3>Placement</h3>
+          {['line', 'area', 'scatter'].indexOf(vType) > -1 &&
+            <div>
+              <label>X axis</label>
+              <div
+                style={{
+                  border: '1px solid #f1f2f2',
+                  borderRadius: '0.5rem',
+                  padding: '0.5rem',
+                  position: 'relative',
+                  backgroundColor: props.rootState.draggedColumn != null ?
+                    getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date'])
+                    :
+                    'transparent',
+                }}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  if (getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date']) === redColor) return false;
+                  props.setRootState({
+                    columnX: props.rootState.draggedColumn,
+                    draggedColumn: null,
+                  })
+                 onChangeSpec({
+                    datasetColumnX: props.rootState.draggedColumn,
+                    datasetColumnXType: getType(columnOptions, props.rootState.draggedColumn),
+                    labelX: getTitle(columnOptions, props.rootState.draggedColumn),
+                  });
+                }}
+              >
+                {props.rootState.columnX ?
+                  <span>
+                    {getTitle(columnOptions, props.rootState.columnX)}
+                    <span
+                      style={{
+                        position: 'absolute',
+                        right: '0.5rem',
+                        cursor: 'pointer',
+                      }}
+                      onClick={()=> {
+                        props.setRootState({
+                          columnX: null,
+                        });
+                        onChangeSpec({
+                          datasetColumnX: null,
+                          datasetColumnX: null,
+                          labelX: null,
+                        })
+                      }}
+                    >x</span>
+                  </span>
+                  :
+                  <span
+                    style={{
+                      color: 'grey',
+                    }}
+                  >
+                    Drag column for X axis
+                  </span>
+                }
+              </div>
+            </div>
+          }
+          <div>
+            <label>{vType === 'pie' ? 'Data column' : 'Y axis'}</label>
+            <div
+              style={{
+                border: '1px solid #f1f2f2',
+                borderRadius: '0.5rem',
+                padding: '0.5rem',
+                position: 'relative',
+                backgroundColor: props.rootState.draggedColumn != null ?
+                  getDragTargetColor(props.rootState.draggedColumnType, vType === 'pie' ? ['text', 'number'] : ['number'])
+                  :
+                  'transparent',
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                if (getDragTargetColor(props.rootState.draggedColumnType, vType === 'pie' ? ['text', 'number'] : ['number']) == redColor) return false;
+                props.setRootState({
+                  columnY: props.rootState.draggedColumn,
+                  draggedColumn: null,
+                })
+               onChangeSpec({
+                  datasetColumnY: props.rootState.draggedColumn,
+                  datasetColumnYType: getType(columnOptions, props.rootState.draggedColumn),
+                  labelY: getTitle(columnOptions, props.rootState.draggedColumn),
+                });
+              }}
+            >
+              {props.rootState.columnY ?
+                <span>
+                  {getTitle(columnOptions, props.rootState.columnY)}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: '0.5rem',
+                      cursor: 'pointer',
+                    }}
+                    onClick={()=> {
+                      props.setRootState({
+                        columnY: null,
+                      });
+                      onChangeSpec({
+                        datasetColumnY: null,
+                        datasetColumnY: null,
+                        labelY: null,
+                      })
+                    }}
+                  >x</span>
+                </span>
+                :
+                <span
+                  style={{
+                    color: 'grey',
+                  }}
+                >
+                  Drag column for {vType === 'pie' ? 'data column' : 'Y axis'}
+                </span>
+              }
+            </div>
+          </div>
+          {(['bar'].indexOf(vType) > -1 && spec.datasetColumnY !== null) &&
+            <SelectInput
+              placeholder="None"
+              labelText="Sort option"
+              choice={spec.sortOption}
+              name="xSortColumnInput"
+              options={[
+                {
+                  value: 'none',
+                  label: 'None',
+                },
+                {
+                  value: 'asc',
+                  label: 'Ascending',
+                },
+                {
+                  value: 'dsc',
+                  label: 'Descending',
+                },
+              ]}
+              onChange={value => onChangeSpec({
+                sortOption: value,
+              })}
+            />
+          }
+        </div>
+        <div>
+          {(visualisation.spec.datasetColumnX !== null || visualisation.spec.datasetColumnY !== null) &&
+            <div>
+              <hr />
+              <h3>Marks</h3>
+              <div>
+                {vType=== 'bar' && labelMenu}
+                {vType=== 'bar' && groupColumnMenu}
+                {(['bar', 'scatter', 'pie', 'donut'].indexOf(vType) > -1) && colorMenu}
+                {vType === 'scatter' && sizeMenu}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    )
+  }
+}
+

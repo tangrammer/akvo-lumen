@@ -2,6 +2,7 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
   const hasAggregation = Boolean(visualisation.spec.datasetGroupColumnX);
   const dataArray = data.map(item => item);
   const transformType = hasAggregation ? visualisation.spec.aggregationTypeY : null;
+  const spec = visualisation.spec;
 
   if (hasAggregation) {
     const transform1 = {
@@ -18,6 +19,9 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
             sortValue: [
               transformType,
             ],
+            colorValue: [
+              transformType,
+            ],
           },
         },
       ],
@@ -29,20 +33,23 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
   const hasSort = visualisation.spec.datasetSortColumnX !== null;
   const fieldX = hasAggregation ? 'aggregationValue' : 'x';
   const fieldY = hasAggregation ? `${transformType}_y` : 'y';
+  const fieldC = hasAggregation ? `${transformType}_colorValue` : 'colorValue';
 
   let sort = null;
   let reverse = false;
 
+  /*
   if (hasAggregation && hasSort) {
     // Vega won't use an operation on text, so just set sort to "true" for text types
     sort = visualisation.spec.datasetSortColumnXType === 'text' ? 'true' : {
       field: `${transformType}_sortValue`,
-      op: 'mean',
+      op: transformType,
     };
     reverse = visualisation.spec.reverseSortX;
   }
+  */
 
-  return ({
+  let out = {
     data: dataArray,
     width: containerWidth - 70,
     height: containerHeight - 96,
@@ -60,9 +67,12 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
         domain: {
           data: dataSource,
           field: fieldX,
-          sort,
+          sort: spec.sortOption === 'none' ? null : {
+            field: fieldY,
+            op: 'mean',
+          },
         },
-        reverse,
+        reverse: spec.sortOption === 'dsc' ? 'true' : null,
       },
       {
         name: 'y',
@@ -132,6 +142,9 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
             fill: {
               value: 'rgb(149, 150, 184)',
             },
+            stroke: {
+              value: 'rgba(0, 0, 0, 0.25)',
+            }
           },
           hover: {
             fill: {
@@ -261,5 +274,42 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
         ],
       },
     ],
-  });
+  };
+
+  if (spec.colorColumn !== null) {
+    out.scales.push({
+        "name": "color",
+        "type": "linear",
+        "domain": {"data": dataSource,"field": fieldC},
+        "range": ["#AFC6A3","#09622A"],
+        "nice": false,
+        "zero": false
+    });
+
+    out.marks[0].properties.update.fill = {
+      scale: "color",
+      field: fieldC,
+    }
+
+    if (!out.legends) out.legends = [];
+
+    out.legends.push(
+      {
+        "fill": "color",
+        "title": spec.colorTitle,
+        "format": "s",
+        "properties": {
+          "symbols": {
+            "shape": {"value": "circle"},
+            "strokeWidth": {"value": 0},
+            "opacity": {"value": 0.7}
+          }
+        }
+      }
+    );
+
+    out.padding.right = out.padding.right + 150;
+  }
+
+  return out;
 }

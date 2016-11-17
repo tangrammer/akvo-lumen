@@ -41,7 +41,7 @@ export default class Chart extends Component {
     const { visualisation, datasets, width, height } = props;
     const chartData = chart.getChartData(visualisation, datasets);
     const containerHeight = height || 400;
-    const containerWidth = width || 800;
+    const containerWidth = width || 600;
     const vegaSpec = chart.getVegaSpec(visualisation, chartData, containerHeight, containerWidth);
 
     vg.parse.spec(vegaSpec, (error, vegaChart) => {
@@ -54,7 +54,7 @@ export default class Chart extends Component {
     const { visualisation, width, height } = this.props;
     const { visualisationType } = visualisation;
     const containerHeight = height || 400;
-    const containerWidth = width || 800;
+    const containerWidth = width || 600;
     const chartSize = getSize(containerWidth);
     const className = `Chart ${visualisationType} ${chartSize}`;
 

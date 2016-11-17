@@ -1,4 +1,5 @@
 export default function getVegaScatterSpec(visualisation, data, containerHeight, containerWidth) {
+  const spec = visualisation.spec;
   const hasAggregation = Boolean(visualisation.spec.datasetGroupColumnX &&
     visualisation.spec.aggregationTypeY);
   const dataArray = data.map(item => item);
@@ -30,6 +31,7 @@ export default function getVegaScatterSpec(visualisation, data, containerHeight,
   const dataSource = hasAggregation ? 'summary' : 'table';
   const fieldX = hasAggregation ? `${transformType}_x` : 'x';
   const fieldY = hasAggregation ? `${transformType}_y` : 'y';
+  const fieldC = hasAggregation ? `${transformType}_colorValue` : 'colorValue';
 
   const scales = [
     {
@@ -92,7 +94,7 @@ export default function getVegaScatterSpec(visualisation, data, containerHeight,
     };
   }
 
-  return ({
+  const out = {
     data: dataArray,
     width: containerWidth - 90,
     height: containerHeight - 100,
@@ -212,5 +214,79 @@ export default function getVegaScatterSpec(visualisation, data, containerHeight,
         ],
       },
     ],
-  });
+  };
+
+  if (spec.colorColumn !== null) {
+    out.scales.push({
+        "name": "color",
+        "type": "linear",
+        "domain": {"data": dataSource,"field": fieldC},
+        "range": ["#AFC6A3","#09622A"],
+        "nice": false,
+        "zero": false
+    });
+
+    out.marks[0].properties.update.fill = {
+      scale: "color",
+      field: fieldC,
+    }
+
+    if (!out.legends) out.legends = [];
+
+    out.legends.push(
+      {
+        "fill": "color",
+        "title": spec.colorTitle,
+        "format": "s",
+        "properties": {
+          "symbols": {
+            "shape": {"value": "circle"},
+            "strokeWidth": {"value": 0},
+            "opacity": {"value": 0.7}
+          }
+        }
+      }
+    );
+
+    out.padding.right = out.padding.right + 150;
+  }
+
+  if (spec.sizeColumn !== null) {
+    out.scales.push({
+      "name": "size",
+      "type": "linear",
+      "domain": {"data": dataSource,"field": "sizeValue"},
+      "range": [5, 200],
+      "nice": false,
+      "zero": false
+    });
+
+    out.legends.push(
+      {
+        "size": "size",
+        "title": spec.sizeTitle || 'legend',
+        "format": "s",
+        "properties": {
+          "symbols": {
+            "shape": {"value": "circle"},
+            "strokeWidth": {"value": 2},
+            "opacity": {"value": 0.7}
+          }
+        }
+      }
+    );
+
+    out.marks[0].type = 'symbol';
+    delete out.marks[0].properties.update.width;
+    delete out.marks[0].properties.update.height;
+
+    out.marks[0].properties.shape = {"value": "circle"};
+    out.marks[0].properties.strokeWidth = {"value": 2};
+    out.marks[0].properties.update.size = {
+      scale: "size",
+      field: "sizeValue",
+    }
+  }
+
+  return out;
 }

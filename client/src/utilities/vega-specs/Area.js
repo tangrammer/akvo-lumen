@@ -4,6 +4,7 @@ export default function getVegaAreaSpec(visualisation, data, containerHeight, co
   const hasSort = visualisation.spec.datasetSortColumnX !== null;
   const dataArray = data.map(item => item);
   const transformType = hasAggregation ? visualisation.spec.aggregationTypeY : null;
+  const xIsDate = visualisation.spec.datasetColumnXType === 'date';
 
   if (hasAggregation) {
     const transform1 = {
@@ -30,8 +31,13 @@ export default function getVegaAreaSpec(visualisation, data, containerHeight, co
   const dataSource = hasAggregation ? 'summary' : 'table';
   const xAggTrue = hasSort ? `${transformType}_sortValue` : 'aggregationValue';
   const xAggFalse = 'x';
-  const fieldX = hasAggregation ? xAggTrue : xAggFalse;
-  const fieldY = hasAggregation ? `${transformType}_y` : 'y';
+  //const fieldX = hasAggregation ? xAggTrue : xAggFalse;
+  //const fieldY = hasAggregation ? `${transformType}_y` : 'y';
+  const fieldX = 'x';
+  const fieldY = 'y';
+
+  console.log(data);
+
   return ({
     data: dataArray,
     height: containerHeight - 120,
@@ -52,7 +58,6 @@ export default function getVegaAreaSpec(visualisation, data, containerHeight, co
           data: dataSource,
           field: fieldX,
         },
-        reverse: hasAggregation ? visualisation.spec.reverseSortX : false,
       },
       {
         name: 'y',
@@ -73,7 +78,7 @@ export default function getVegaAreaSpec(visualisation, data, containerHeight, co
         properties: {
           labels: {
             text: {
-              template: '{{datum.data}}',
+              template: xIsDate ? '{{datum.data|time:"%Y-%m-%d"}}' : '{{datum.data}}',
             },
             angle: {
               value: 25,

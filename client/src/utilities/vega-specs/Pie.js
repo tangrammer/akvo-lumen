@@ -1,12 +1,14 @@
 export default function getVegaPieSpec(visualisation, data, containerHeight, containerWidth) {
+  const spec = visualisation.spec;
   const chartRadius = containerHeight < containerWidth ? containerHeight / 3 : containerWidth / 3;
   const innerRadius = visualisation.visualisationType === 'donut' ?
     Math.floor(chartRadius / 1.75) : 0;
 
-  const hasAggregation = Boolean(visualisation.spec.datasetGroupColumnX &&
-    visualisation.spec.aggregationTypeY);
+  /* const hasAggregation = Boolean(visualisation.spec.datasetGroupColumnX &&
+    visualisation.spec.aggregationTypeY); */
+  const hasAggregation = true;
   const dataArray = data.map(item => item);
-  const transformType = hasAggregation ? visualisation.spec.aggregationTypeY : null;
+  const transformType = 'count';
 
   if (hasAggregation) {
     const transform1 = {
@@ -19,6 +21,9 @@ export default function getVegaPieSpec(visualisation, data, containerHeight, con
           summarize: {
             y: [
               transformType,
+            ],
+            colorValue: [
+              spec.colorAggregationType,
             ],
           },
         },
@@ -68,8 +73,9 @@ export default function getVegaPieSpec(visualisation, data, containerHeight, con
   const dataSource = hasAggregation ? 'pie' : 'table';
   const segmentLabelField = hasAggregation ? 'aggregationValue' : 'label';
   const fieldY = hasAggregation ? `${transformType}_y` : 'y';
+  const fieldC = hasAggregation ? `${spec.colorAggregationType}_colorValue` : 'colorValue';
 
-  return ({
+  let out = {
     data: dataArray,
     width: containerWidth - 20,
     height: containerHeight - 45,
@@ -269,5 +275,42 @@ export default function getVegaPieSpec(visualisation, data, containerHeight, con
         ],
       },
     ],
-  });
+  };
+
+  if (spec.colorColumn !== null) {
+    out.scales.push({
+        "name": "color",
+        "type": "linear",
+        "domain": {"data": dataSource,"field": fieldC},
+        "range": ["#AFC6A3","#09622A"],
+        "nice": false,
+        "zero": false
+    });
+
+    out.marks[0].properties.update.fill = {
+      scale: "color",
+      field: fieldC,
+    }
+
+    if (!out.legends) out.legends = [];
+
+    out.legends.push(
+      {
+        "fill": "color",
+        "title": spec.colorTitle,
+        "format": "s",
+        "properties": {
+          "symbols": {
+            "shape": {"value": "circle"},
+            "strokeWidth": {"value": 0},
+            "opacity": {"value": 0.7}
+          }
+        }
+      }
+    );
+
+    out.padding.right = out.padding.right + 150;
+  }
+
+  return out;
 }

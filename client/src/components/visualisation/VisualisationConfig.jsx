@@ -12,6 +12,9 @@ const getConfigMenu = (chartType, componentProps) => {
       onChangeTitle={componentProps.onChangeTitle}
       onChangeSourceDataset={componentProps.onChangeSourceDataset}
       onChangeVisualisationSpec={componentProps.onChangeVisualisationSpec}
+      rootState={componentProps.rootState}
+      setRootState={componentProps.setRootState}
+      onChangeVisualisationType={componentProps.onChangeVisualisationType}
     />
   );
 
@@ -24,22 +27,13 @@ export default function VisualisationConfig(props) {
 
   return (
     <div className="VisualisationConfig">
-      <h3 className="title">Configure Visualisation</h3>
-      <VisualisationTypeMenu
-        onChangeVisualisationType={props.onChangeVisualisationType}
-        visualisation={visualisation}
-      />
-      {visualisation.visualisationType &&
-        configMenu
-      }
-      {visualisation.visualisationType &&
-        <button
-          className="saveChanges clickable"
-          onClick={props.onSaveVisualisation}
-        >
-          Save changes
-        </button>
-      }
+      {configMenu}
+      <button
+        className="saveChanges clickable"
+        onClick={props.onSaveVisualisation}
+      >
+        Save changes
+      </button>
     </div>
   );
 }
