@@ -282,6 +282,7 @@ export default class ConfigMenu extends Component {
         style={{
           display: 'flex',
           flexDirection: 'row',
+          minHeight: '100%',
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
@@ -298,11 +299,7 @@ export default class ConfigMenu extends Component {
             paddingRight: '1rem',
           }}
         >
-          <h3>Visualisation</h3>
-          <VisualisationTypeMenu
-            visualisation={visualisation}
-            onChangeVisualisationType={this.props.onChangeVisualisationType}
-          />
+          <h3>Dataset</h3>
           <div className="inputGroup">
             <label htmlFor="xDatasetMenu">Source dataset:</label>
             <SelectMenu
@@ -320,17 +317,6 @@ export default class ConfigMenu extends Component {
             spec={spec}
             columnOptions={columnOptions}
           />
-          <div className="inputGroup">
-            <label htmlFor="chartTitle">Chart title:</label>
-            <input
-              className="textInput"
-              type="text"
-              id="chartTitle"
-              placeholder="Untitled chart"
-              defaultValue={visualisation.name !== null ? visualisation.name.toString() : null}
-              onChange={props.onChangeTitle}
-            />
-          </div>
           {visualisation.datasetId !== null &&
             <div>
               <hr />
@@ -386,6 +372,29 @@ export default class ConfigMenu extends Component {
         >
           {visualisation.datasetId !== null &&
             <div>
+              <h3>Visualisation</h3>
+              <div className="inputGroupFoo">
+                <label htmlFor="chartTitle">Chart title:</label>
+                <input
+                  className="textInput"
+                  type="text"
+                  id="chartTitle"
+                  placeholder="Untitled chart"
+                  defaultValue={visualisation.name !== null ? visualisation.name.toString() : null}
+                  onChange={props.onChangeTitle}
+                />
+              </div>
+              <VisualisationTypeMenu
+                visualisation={visualisation}
+                onChangeVisualisationType={this.props.onChangeVisualisationType}
+              />
+              <div
+                style={{
+                  paddingTop: '1rem',
+                }}
+              />
+              <hr
+              />
               <PlacementMenu
                 columnOptions={columnOptions}
                 {...this.props}
@@ -650,13 +659,13 @@ class PlacementMenu extends Component {
           padding: '0.5rem',
           position: 'relative',
           backgroundColor: props.rootState.draggedColumn != null ?
-            getDragTargetColor(props.rootState.draggedColumnType, ['text'])
+            getDragTargetColor(props.rootState.draggedColumnType, ['text', 'number'])
             :
             'transparent',
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
-          if (getDragTargetColor(props.rootState.draggedColumnType, ['text']) === redColor) return false;
+          if (getDragTargetColor(props.rootState.draggedColumnType, ['text', 'number']) === redColor) return false;
           props.setRootState({
             datasetGroupColumnX: props.rootState.draggedColumn,
             draggedColumn: null,
@@ -862,10 +871,12 @@ class PlacementMenu extends Component {
           {(visualisation.spec.datasetColumnX !== null || visualisation.spec.datasetColumnY !== null) &&
             <div>
               <hr />
-              <h3>Marks</h3>
+              {(['bar', 'scatter', 'pie', 'donut'].indexOf(vType) > -1) &&
+                <h3>Marks</h3>
+              }
               <div>
-                {vType=== 'bar' && labelMenu}
                 {vType=== 'bar' && groupColumnMenu}
+                {vType=== 'bar' && labelMenu}
                 {(['bar', 'scatter', 'pie', 'donut'].indexOf(vType) > -1) && colorMenu}
                 {vType === 'scatter' && sizeMenu}
               </div>

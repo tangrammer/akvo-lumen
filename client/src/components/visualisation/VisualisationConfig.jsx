@@ -28,12 +28,14 @@ export default function VisualisationConfig(props) {
   return (
     <div className="VisualisationConfig">
       {configMenu}
-      <button
-        className="saveChanges clickable"
-        onClick={props.onSaveVisualisation}
-      >
-        Save changes
-      </button>
+      <div className="saveContainer">
+        <button
+          className="saveChanges clickable"
+          onClick={props.onSaveVisualisation}
+        >
+          Save changes
+        </button>
+      </div>
     </div>
   );
 }

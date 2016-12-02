@@ -1,6 +1,9 @@
 @import 'modules/colors';
 
 .VisualisationConfig {
+  position: relative;
+  z-index: 2;
+
   h3, h4 {
     font-weight: bold;
     color: $strongBlue;
@@ -133,6 +136,16 @@
     .filterColumnInput {
       margin-bottom: 1rem;
     }
+  }
+  .saveContainer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 4rem;
+    width: 32rem;
+    background-color: white;
+    border-top: 0.1rem solid $lightBlueGrey;
+    z-index: 1;
   }
   .saveChanges {
     bottom: 1rem;

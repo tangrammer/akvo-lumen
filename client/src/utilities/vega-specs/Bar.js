@@ -52,11 +52,11 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
   let out = {
     data: dataArray,
     width: containerWidth - 70,
-    height: containerHeight - 96,
+    height: containerHeight - 146,
     padding: {
       top: 26,
       left: 60,
-      bottom: 70,
+      bottom: 120,
       right: 10,
     },
     scales: [
@@ -90,6 +90,7 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
         type: 'x',
         scale: 'x',
         title: visualisation.spec.labelX,
+        titleOffset: 90,
         tickPadding: 0,
         properties: {
           labels: (visualisation.spec.datasetNameColumnX === null && !hasAggregation) ?
@@ -108,7 +109,7 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
       {
         type: 'y',
         scale: 'y',
-        title: visualisation.spec.labelY,
+        title: hasAggregation ? `${transformType} ${visualisation.spec.labelY}`: visualisation.spec.labelY,
       },
     ],
     marks: [

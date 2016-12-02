@@ -330,8 +330,8 @@ export function getChartData(visualisation, datasets) {
 
         const row = dataset.get('rows').get(index);
         const filterValues = getFilterValues(filters, row);
-        const x = dataXType === 'date' ? parseFloat(entry) * 1000 : parseFloat(entry);
-        const y = dataYType === 'date' ? parseFloat(dataY[index]) * 1000 : parseFloat(dataY[index]);
+        const x = dataYType === 'date' ? parseFloat(entry) * 1000 : parseFloat(entry);
+        const y = dataXType === 'date' ? parseFloat(dataY[index]) * 1000 : parseFloat(dataY[index]);
 
         let colorValue = colorValues ? parseFloat(colorValues[index]) : null;
         let sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
