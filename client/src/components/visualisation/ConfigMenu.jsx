@@ -283,6 +283,7 @@ export default class ConfigMenu extends Component {
           display: 'flex',
           flexDirection: 'row',
           minHeight: '100%',
+          paddingBottom: '4rem',
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
