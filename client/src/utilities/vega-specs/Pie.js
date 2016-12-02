@@ -75,7 +75,7 @@ export default function getVegaPieSpec(visualisation, data, containerHeight, con
   const fieldY = hasAggregation ? `${transformType}_y` : 'y';
   const fieldC = hasAggregation ? `${spec.colorAggregationType}_colorValue` : 'colorValue';
 
-  let out = {
+  const out = {
     data: dataArray,
     width: containerWidth - 20,
     height: containerHeight - 45,
@@ -233,13 +233,13 @@ export default function getVegaPieSpec(visualisation, data, containerHeight, con
               value: 'center',
             },
             text: hasAggregation ?
-              {
-                template: '{{datum.rounded_percentage}}% ({{datum.rounded_value}})',
-              }
+            {
+              template: '{{datum.rounded_percentage}}% ({{datum.rounded_value}})',
+            }
               :
-              {
-                field: fieldY,
-              }
+            {
+              field: fieldY,
+            }
             ,
           },
         },
@@ -279,33 +279,33 @@ export default function getVegaPieSpec(visualisation, data, containerHeight, con
 
   if (spec.colorColumn !== null) {
     out.scales.push({
-        "name": "color",
-        "type": "linear",
-        "domain": {"data": dataSource,"field": fieldC},
-        "range": ["#AFC6A3","#09622A"],
-        "nice": false,
-        "zero": false
+      name: 'color',
+      type: 'linear',
+      domain: { data: dataSource, field: fieldC },
+      range: ['#AFC6A3', '#09622A'],
+      nice: false,
+      zero: false,
     });
 
     out.marks[0].properties.update.fill = {
-      scale: "color",
+      scale: 'color',
       field: fieldC,
-    }
+    };
 
     if (!out.legends) out.legends = [];
 
     out.legends.push(
       {
-        "fill": "color",
-        "title": spec.colorTitle,
-        "format": "s",
-        "properties": {
-          "symbols": {
-            "shape": {"value": "circle"},
-            "strokeWidth": {"value": 0},
-            "opacity": {"value": 0.7}
-          }
-        }
+        fill: 'color',
+        title: spec.colorTitle,
+        format: 's',
+        properties: {
+          symbols: {
+            shape: { value: 'circle' },
+            strokeWidth: { value: 0 },
+            opacity: { value: 0.7 },
+          },
+        },
       }
     );
 

@@ -31,8 +31,8 @@ export default function getVegaAreaSpec(visualisation, data, containerHeight, co
   const dataSource = hasAggregation ? 'summary' : 'table';
   const xAggTrue = hasSort ? `${transformType}_sortValue` : 'aggregationValue';
   const xAggFalse = 'x';
-  //const fieldX = hasAggregation ? xAggTrue : xAggFalse;
-  //const fieldY = hasAggregation ? `${transformType}_y` : 'y';
+  // const fieldX = hasAggregation ? xAggTrue : xAggFalse;
+  // const fieldY = hasAggregation ? `${transformType}_y` : 'y';
   const fieldX = 'x';
   const fieldY = 'y';
 

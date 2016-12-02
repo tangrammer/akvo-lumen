@@ -176,21 +176,21 @@ export default function getVegaScatterSpec(visualisation, data, containerHeight,
               offset: -8,
             },
             text: hasAggregation ?
-              {
-                template: visualisation.spec.datasetGroupColumnXType === 'date' ?
+            {
+              template: visualisation.spec.datasetGroupColumnXType === 'date' ?
                   '{{datum.aggregationValue | time:"%Y-%b-%d %H-%M"}}'
                   :
                   '{{datum.aggregationValue}}'
                 ,
-              }
+            }
               :
-              {
-                template: visualisation.spec.datasetNameColumnXType === 'date' ?
+            {
+              template: visualisation.spec.datasetNameColumnXType === 'date' ?
                   '{{datum.label | time:"%Y-%b-%d %H-%M"}}'
                   :
                   '{{datum.label}}'
                 ,
-              },
+            },
             align: {
               value: 'center',
             },
@@ -218,33 +218,33 @@ export default function getVegaScatterSpec(visualisation, data, containerHeight,
 
   if (spec.colorColumn !== null) {
     out.scales.push({
-        "name": "color",
-        "type": "linear",
-        "domain": {"data": dataSource,"field": fieldC},
-        "range": ["#AFC6A3","#09622A"],
-        "nice": false,
-        "zero": false
+      name: 'color',
+      type: 'linear',
+      domain: { data: dataSource, field: fieldC },
+      range: ['#AFC6A3', '#09622A'],
+      nice: false,
+      zero: false,
     });
 
     out.marks[0].properties.update.fill = {
-      scale: "color",
+      scale: 'color',
       field: fieldC,
-    }
+    };
 
     if (!out.legends) out.legends = [];
 
     out.legends.push(
       {
-        "fill": "color",
-        "title": spec.colorTitle,
-        "format": "s",
-        "properties": {
-          "symbols": {
-            "shape": {"value": "circle"},
-            "strokeWidth": {"value": 0},
-            "opacity": {"value": 0.7}
-          }
-        }
+        fill: 'color',
+        title: spec.colorTitle,
+        format: 's',
+        properties: {
+          symbols: {
+            shape: { value: 'circle' },
+            strokeWidth: { value: 0 },
+            opacity: { value: 0.7 },
+          },
+        },
       }
     );
 
@@ -253,26 +253,26 @@ export default function getVegaScatterSpec(visualisation, data, containerHeight,
 
   if (spec.sizeColumn !== null) {
     out.scales.push({
-      "name": "size",
-      "type": "linear",
-      "domain": {"data": dataSource,"field": "sizeValue"},
-      "range": [5, 200],
-      "nice": false,
-      "zero": false
+      name: 'size',
+      type: 'linear',
+      domain: { data: dataSource, field: 'sizeValue' },
+      range: [5, 200],
+      nice: false,
+      zero: false,
     });
 
     out.legends.push(
       {
-        "size": "size",
-        "title": spec.sizeTitle || 'legend',
-        "format": "s",
-        "properties": {
-          "symbols": {
-            "shape": {"value": "circle"},
-            "strokeWidth": {"value": 2},
-            "opacity": {"value": 0.7}
-          }
-        }
+        size: 'size',
+        title: spec.sizeTitle || 'legend',
+        format: 's',
+        properties: {
+          symbols: {
+            shape: { value: 'circle' },
+            strokeWidth: { value: 2 },
+            opacity: { value: 0.7 },
+          },
+        },
       }
     );
 
@@ -280,12 +280,12 @@ export default function getVegaScatterSpec(visualisation, data, containerHeight,
     delete out.marks[0].properties.update.width;
     delete out.marks[0].properties.update.height;
 
-    out.marks[0].properties.shape = {"value": "circle"};
-    out.marks[0].properties.strokeWidth = {"value": 2};
+    out.marks[0].properties.shape = { value: 'circle' };
+    out.marks[0].properties.strokeWidth = { value: 2 };
     out.marks[0].properties.update.size = {
-      scale: "size",
-      field: "sizeValue",
-    }
+      scale: 'size',
+      field: 'sizeValue',
+    };
   }
 
   return out;

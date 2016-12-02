@@ -154,10 +154,10 @@ export default class FilterMenu extends Component {
       columnOptions[this.state.newFilterColumn].type : null;
     return (
       <div
-        className={`FilterMenu inputGroup`}
+        className={'FilterMenu inputGroup'}
       >
         <h4
-          onClick={() => this.setState({expandMenu: !this.state.expandMenu})}
+          onClick={() => this.setState({ expandMenu: !this.state.expandMenu })}
           style={{
             cursor: 'pointer',
             position: 'relative',

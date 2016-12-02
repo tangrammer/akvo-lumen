@@ -159,8 +159,8 @@ export function getChartData(visualisation, datasets) {
           sortValue = sortValue.toString();
         }
 
-        let colorValue = colorValues ? parseFloat(colorValues[index]) : null;
-        let sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
+        const colorValue = colorValues ? parseFloat(colorValues[index]) : null;
+        const sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
 
         let aggregationValue = aggregationValuesX ? aggregationValuesX[index] : null;
         aggregationValue = spec.datasetGroupColumnXType === 'date' ?
@@ -215,7 +215,7 @@ export function getChartData(visualisation, datasets) {
     case 'pie':
     case 'donut':
 
-        dataValues = dataX.map((entry, index) => {
+      dataValues = dataX.map((entry, index) => {
         const key = index;
         const row = dataset.get('rows').get(index);
 
@@ -249,8 +249,8 @@ export function getChartData(visualisation, datasets) {
           sortValue = sortValue.toString();
         }
 
-        let colorValue = colorValues ? parseFloat(colorValues[index]) : null;
-        let sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
+        const colorValue = colorValues ? parseFloat(colorValues[index]) : null;
+        const sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
 
         let aggregationValue = entry;
         aggregationValue = spec.datasetColumnXType === 'date' ?
@@ -272,7 +272,7 @@ export function getChartData(visualisation, datasets) {
         values: dataValues,
       };
 
-    break;
+      break;
 
     case 'line':
     case 'area':
@@ -308,15 +308,15 @@ export function getChartData(visualisation, datasets) {
         });
       });
 
-      dataValues.sort((a, b) => {
-        return a.x - b.x;
-      });
+      dataValues.sort((a, b) =>
+         a.x - b.x
+      );
 
       output = {
         values: dataValues,
       };
 
-    break;
+      break;
 
     case 'scatter':
 
@@ -333,8 +333,8 @@ export function getChartData(visualisation, datasets) {
         const x = dataYType === 'date' ? parseFloat(entry) * 1000 : parseFloat(entry);
         const y = dataXType === 'date' ? parseFloat(dataY[index]) * 1000 : parseFloat(dataY[index]);
 
-        let colorValue = colorValues ? parseFloat(colorValues[index]) : null;
-        let sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
+        const colorValue = colorValues ? parseFloat(colorValues[index]) : null;
+        const sizeValue = sizeValues ? parseFloat(sizeValues[index]) : null;
 
         return ({
           x: y,

@@ -48,14 +48,14 @@ const getColumnType = (index, options) => {
 const getColColor = (index, spec) => {
   let count = 0;
 
-  [spec.datasetColumnX, spec.datasetColumnY, spec.colorColumn, spec.sizeColumn].forEach(num => {
+  [spec.datasetColumnX, spec.datasetColumnY, spec.colorColumn, spec.sizeColumn].forEach((num) => {
     if (num === index) ++count;
   });
 
-  if (count === 0) return('#f1f2f2');
+  if (count === 0) return ('#f1f2f2');
 
-  return `rgba(43, 182, 115, ${count * 0.25})`
-}
+  return `rgba(43, 182, 115, ${count * 0.25})`;
+};
 
 const Subtitle = ({ children }) => (
   <h3 className="subtitle">{children}</h3>
@@ -114,26 +114,26 @@ const aggregationOptions = [
 const getTitle = (columnOptions, id) => {
   let out;
 
-  columnOptions.forEach(item => {
+  columnOptions.forEach((item) => {
     if (item.value === id) {
       out = item.title;
     }
   });
 
   return out;
-}
+};
 
 const getType = (columnOptions, id) => {
   let out;
 
-  columnOptions.forEach(item => {
+  columnOptions.forEach((item) => {
     if (item.value === id) {
       out = item.type;
     }
   });
 
   return out;
-}
+};
 
 const ColumnGroupingInput = ({ spec, columnOptions, onChangeSpec }) => (
   <div
@@ -285,7 +285,7 @@ export default class ConfigMenu extends Component {
           minHeight: '100%',
           paddingBottom: '4rem',
         }}
-        onDragOver={(e) => e.preventDefault()}
+        onDragOver={e => e.preventDefault()}
         onDrop={(e) => {
           props.setRootState({
             draggedColumn: null,
@@ -351,10 +351,10 @@ export default class ConfigMenu extends Component {
                       }}
                     >
                       <span>
-                        {'[' + item.type + '] '}
+                        {`[${item.type}] `}
                       </span>
                       <span>
-                        {item.title.length > 20 ? item.title.substring(0, 17) + '...' : item.title}
+                        {item.title.length > 20 ? `${item.title.substring(0, 17)}...` : item.title}
                       </span>
                     </h4>
                   </li>
@@ -394,8 +394,7 @@ export default class ConfigMenu extends Component {
                   paddingTop: '1rem',
                 }}
               />
-              <hr
-              />
+              <hr />
               <PlacementMenu
                 columnOptions={columnOptions}
                 {...this.props}
@@ -417,7 +416,7 @@ const getDragTargetColor = (itemType, validTypes) => {
   color = flag ? 'rgba(0,255,0,0.1)' : 'rgba(255, 0,0,0.1)';
 
   return color;
-}
+};
 
 Subtitle.propTypes = {
   children: PropTypes.node.isRequired,
@@ -455,7 +454,7 @@ class PlacementMenu extends Component {
               :
               'transparent',
           }}
-          onDragOver={(e) => e.preventDefault()}
+          onDragOver={e => e.preventDefault()}
           onDrop={(e) => {
             if (getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date']) === redColor) {
               return false;
@@ -463,8 +462,8 @@ class PlacementMenu extends Component {
             props.setRootState({
               sizeColumn: props.rootState.draggedColumn,
               draggedColumn: null,
-            })
-           onChangeSpec({
+            });
+            onChangeSpec({
               sizeColumn: props.rootState.draggedColumn,
               sizeColumnType: getType(columnOptions, props.rootState.draggedColumn),
               sizeTitle: getTitle(columnOptions, props.rootState.draggedColumn),
@@ -480,7 +479,7 @@ class PlacementMenu extends Component {
                   right: '0.5rem',
                   cursor: 'pointer',
                 }}
-                onClick={()=> {
+                onClick={() => {
                   props.setRootState({
                     sizeColumn: null,
                   });
@@ -488,18 +487,18 @@ class PlacementMenu extends Component {
                     sizeColumn: null,
                     sizeColumnType: null,
                     sizeColumnTitle: null,
-                  })
+                  });
                 }}
               >x</span>
             </span>
             :
-            <span
-              style={{
-                color: 'grey',
-              }}
-            >
+              <span
+                style={{
+                  color: 'grey',
+                }}
+              >
               Drag column for size
-            </span>
+              </span>
           }
         </div>
       </div>
@@ -519,14 +518,14 @@ class PlacementMenu extends Component {
               :
               'transparent',
           }}
-          onDragOver={(e) => e.preventDefault()}
+          onDragOver={e => e.preventDefault()}
           onDrop={(e) => {
             if (getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date']) === redColor) return false;
             props.setRootState({
               colorColumn: props.rootState.draggedColumn,
               draggedColumn: null,
-            })
-           onChangeSpec({
+            });
+            onChangeSpec({
               colorColumn: props.rootState.draggedColumn,
               colorColumnType: getType(columnOptions, props.rootState.draggedColumn),
               colorTitle: getTitle(columnOptions, props.rootState.draggedColumn),
@@ -542,7 +541,7 @@ class PlacementMenu extends Component {
                   right: '0.5rem',
                   cursor: 'pointer',
                 }}
-                onClick={()=> {
+                onClick={() => {
                   props.setRootState({
                     colorColumn: null,
                   });
@@ -550,18 +549,18 @@ class PlacementMenu extends Component {
                     colorColumn: null,
                     colorColumnType: null,
                     colorColumnTitle: null,
-                  })
+                  });
                 }}
               >x</span>
             </span>
             :
-            <span
-              style={{
-                color: 'grey',
-              }}
-            >
+              <span
+                style={{
+                  color: 'grey',
+                }}
+              >
               Drag column for color
-            </span>
+              </span>
           }
         </div>
         {(vType === 'pie' && spec.colorColumn !== null) &&
@@ -574,148 +573,148 @@ class PlacementMenu extends Component {
     );
 
     const labelMenu = (
-          <div>
-            <label>Bar labels</label>
-            <div
-              style={{
-                border: '1px solid #f1f2f2',
-                borderRadius: '0.5rem',
-                padding: '0.5rem',
-                position: 'relative',
-                backgroundColor: props.rootState.draggedColumn != null ?
+      <div>
+        <label>Bar labels</label>
+        <div
+          style={{
+            border: '1px solid #f1f2f2',
+            borderRadius: '0.5rem',
+            padding: '0.5rem',
+            position: 'relative',
+            backgroundColor: props.rootState.draggedColumn != null ?
                   getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date', 'text'])
                   :
                   'transparent',
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                if (getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date', 'text']) === redColor) return false;
-                if (spec.datasetGroupColumnX !== null) {
-                  return false;
-                }
-                props.setRootState({
-                  datasetNameColumnX: props.rootState.draggedColumn,
-                  draggedColumn: null,
-                })
-               onChangeSpec({
-                  datasetNameColumnX: props.rootState.draggedColumn,
-                  datasetNameColumnXType: getType(columnOptions, props.rootState.draggedColumn),
-                  labelX: getTitle(columnOptions, props.rootState.draggedColumn),
-                });
+          }}
+          onDragOver={e => e.preventDefault()}
+          onDrop={(e) => {
+            if (getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date', 'text']) === redColor) return false;
+            if (spec.datasetGroupColumnX !== null) {
+              return false;
+            }
+            props.setRootState({
+              datasetNameColumnX: props.rootState.draggedColumn,
+              draggedColumn: null,
+            });
+            onChangeSpec({
+              datasetNameColumnX: props.rootState.draggedColumn,
+              datasetNameColumnXType: getType(columnOptions, props.rootState.draggedColumn),
+              labelX: getTitle(columnOptions, props.rootState.draggedColumn),
+            });
+          }}
+        >
+          {spec.datasetGroupColumnX !== null ?
+            <span
+              style={{
+                color: 'grey',
               }}
             >
-              {spec.datasetGroupColumnX !== null ?
-                  <span
-                    style={{
-                      color: 'grey',
-                    }}
-                  >
                     Showing "Group by" labels
-                  </span>
+            </span>
                 :
-                <div>
-                  {spec.datasetNameColumnX !== null ?
-                    <span>
-                      {getTitle(columnOptions, props.rootState.datasetNameColumnX)}
+                  <div>
+                    {spec.datasetNameColumnX !== null ?
+                      <span>
+                        {getTitle(columnOptions, props.rootState.datasetNameColumnX)}
+                        <span
+                          style={{
+                            position: 'absolute',
+                            right: '0.5rem',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => {
+                            props.setRootState({
+                              datasetNameColumnX: null,
+                            });
+                            onChangeSpec({
+                              datasetNameColumnX: null,
+                              datasetNameColumnXType: null,
+                              labelX: null,
+                            });
+                          }}
+                        >x</span>
+                      </span>
+                    :
                       <span
                         style={{
-                          position: 'absolute',
-                          right: '0.5rem',
-                          cursor: 'pointer',
+                          color: 'grey',
                         }}
-                        onClick={()=> {
-                          props.setRootState({
-                            datasetNameColumnX: null,
-                          });
-                          onChangeSpec({
-                            datasetNameColumnX: null,
-                            datasetNameColumnXType: null,
-                            labelX: null,
-                          })
-                        }}
-                      >x</span>
-                    </span>
-                    :
-                    <span
-                      style={{
-                        color: 'grey',
-                      }}
-                    >
+                      >
                       Drag column for bar label
-                    </span>
+                      </span>
                   }
-                </div>
+                  </div>
             }
-            </div>
-          </div>
+        </div>
+      </div>
         );
 
-  const groupColumnMenu = (
-    <div>
-      <label>Group by</label>
-      <div
-        style={{
-          border: '1px solid #f1f2f2',
-          borderRadius: '0.5rem',
-          padding: '0.5rem',
-          position: 'relative',
-          backgroundColor: props.rootState.draggedColumn != null ?
+    const groupColumnMenu = (
+      <div>
+        <label>Group by</label>
+        <div
+          style={{
+            border: '1px solid #f1f2f2',
+            borderRadius: '0.5rem',
+            padding: '0.5rem',
+            position: 'relative',
+            backgroundColor: props.rootState.draggedColumn != null ?
             getDragTargetColor(props.rootState.draggedColumnType, ['text', 'number'])
             :
             'transparent',
-        }}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          if (getDragTargetColor(props.rootState.draggedColumnType, ['text', 'number']) === redColor) return false;
-          props.setRootState({
-            datasetGroupColumnX: props.rootState.draggedColumn,
-            draggedColumn: null,
-          })
-         onChangeSpec({
-            datasetGroupColumnX: props.rootState.draggedColumn,
-            datasetGroupColumnXType: getType(columnOptions, props.rootState.draggedColumn),
-            labelX: getTitle(columnOptions, props.rootState.draggedColumn),
-          });
-        }}
-      >
-        {spec.datasetGroupColumnX !== null ?
-          <span>
-            {getTitle(columnOptions, props.rootState.datasetGroupColumnX)}
+          }}
+          onDragOver={e => e.preventDefault()}
+          onDrop={(e) => {
+            if (getDragTargetColor(props.rootState.draggedColumnType, ['text', 'number']) === redColor) return false;
+            props.setRootState({
+              datasetGroupColumnX: props.rootState.draggedColumn,
+              draggedColumn: null,
+            });
+            onChangeSpec({
+              datasetGroupColumnX: props.rootState.draggedColumn,
+              datasetGroupColumnXType: getType(columnOptions, props.rootState.draggedColumn),
+              labelX: getTitle(columnOptions, props.rootState.draggedColumn),
+            });
+          }}
+        >
+          {spec.datasetGroupColumnX !== null ?
+            <span>
+              {getTitle(columnOptions, props.rootState.datasetGroupColumnX)}
+              <span
+                style={{
+                  position: 'absolute',
+                  right: '0.5rem',
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  props.setRootState({
+                    datasetGroupColumnX: null,
+                  });
+                  onChangeSpec({
+                    datasetGroupColumnX: null,
+                    datasetGroupColumnXType: null,
+                    labelX: null,
+                  });
+                }}
+              >x</span>
+            </span>
+          :
             <span
               style={{
-                position: 'absolute',
-                right: '0.5rem',
-                cursor: 'pointer',
+                color: 'grey',
               }}
-              onClick={()=> {
-                props.setRootState({
-                  datasetGroupColumnX: null,
-                });
-                onChangeSpec({
-                  datasetGroupColumnX: null,
-                  datasetGroupColumnXType: null,
-                  labelX: null,
-                })
-              }}
-            >x</span>
-          </span>
-          :
-          <span
-            style={{
-              color: 'grey',
-            }}
-          >
+            >
             Choose a column to group by
-          </span>
+            </span>
         }
-      </div>
-      {spec.datasetGroupColumnX !== null &&
+        </div>
+        {spec.datasetGroupColumnX !== null &&
         <AggregationInput
           spec={spec}
           onChangeSpec={onChangeSpec}
         />
       }
-    </div>
+      </div>
   );
 
     return (
@@ -736,14 +735,14 @@ class PlacementMenu extends Component {
                     :
                     'transparent',
                 }}
-                onDragOver={(e) => e.preventDefault()}
+                onDragOver={e => e.preventDefault()}
                 onDrop={(e) => {
                   if (getDragTargetColor(props.rootState.draggedColumnType, ['number', 'date']) === redColor) return false;
                   props.setRootState({
                     columnX: props.rootState.draggedColumn,
                     draggedColumn: null,
-                  })
-                 onChangeSpec({
+                  });
+                  onChangeSpec({
                     datasetColumnX: props.rootState.draggedColumn,
                     datasetColumnXType: getType(columnOptions, props.rootState.draggedColumn),
                     labelX: getTitle(columnOptions, props.rootState.draggedColumn),
@@ -759,7 +758,7 @@ class PlacementMenu extends Component {
                         right: '0.5rem',
                         cursor: 'pointer',
                       }}
-                      onClick={()=> {
+                      onClick={() => {
                         props.setRootState({
                           columnX: null,
                         });
@@ -767,18 +766,18 @@ class PlacementMenu extends Component {
                           datasetColumnX: null,
                           datasetColumnX: null,
                           labelX: null,
-                        })
+                        });
                       }}
                     >x</span>
                   </span>
                   :
-                  <span
-                    style={{
-                      color: 'grey',
-                    }}
-                  >
+                    <span
+                      style={{
+                        color: 'grey',
+                      }}
+                    >
                     Drag column for X axis
-                  </span>
+                    </span>
                 }
               </div>
             </div>
@@ -796,14 +795,14 @@ class PlacementMenu extends Component {
                   :
                   'transparent',
               }}
-              onDragOver={(e) => e.preventDefault()}
+              onDragOver={e => e.preventDefault()}
               onDrop={(e) => {
                 if (getDragTargetColor(props.rootState.draggedColumnType, vType === 'pie' ? ['text', 'number'] : ['number']) == redColor) return false;
                 props.setRootState({
                   columnY: props.rootState.draggedColumn,
                   draggedColumn: null,
-                })
-               onChangeSpec({
+                });
+                onChangeSpec({
                   datasetColumnY: props.rootState.draggedColumn,
                   datasetColumnYType: getType(columnOptions, props.rootState.draggedColumn),
                   labelY: getTitle(columnOptions, props.rootState.draggedColumn),
@@ -819,7 +818,7 @@ class PlacementMenu extends Component {
                       right: '0.5rem',
                       cursor: 'pointer',
                     }}
-                    onClick={()=> {
+                    onClick={() => {
                       props.setRootState({
                         columnY: null,
                       });
@@ -827,18 +826,18 @@ class PlacementMenu extends Component {
                         datasetColumnY: null,
                         datasetColumnY: null,
                         labelY: null,
-                      })
+                      });
                     }}
                   >x</span>
                 </span>
                 :
-                <span
-                  style={{
-                    color: 'grey',
-                  }}
-                >
-                  Drag column for {vType === 'pie' ? 'data column' : 'Y axis'}
-                </span>
+                  <span
+                    style={{
+                      color: 'grey',
+                    }}
+                  >
+                  Drag column for               {vType === 'pie' ? 'data column' : 'Y axis'}
+                  </span>
               }
             </div>
           </div>
@@ -876,8 +875,8 @@ class PlacementMenu extends Component {
                 <h3>Marks</h3>
               }
               <div>
-                {vType=== 'bar' && groupColumnMenu}
-                {vType=== 'bar' && labelMenu}
+                {vType === 'bar' && groupColumnMenu}
+                {vType === 'bar' && labelMenu}
                 {(['bar', 'scatter', 'pie', 'donut'].indexOf(vType) > -1) && colorMenu}
                 {vType === 'scatter' && sizeMenu}
               </div>
@@ -885,7 +884,7 @@ class PlacementMenu extends Component {
           }
         </div>
       </div>
-    )
+    );
   }
 }
 

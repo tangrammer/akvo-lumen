@@ -35,8 +35,8 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
   const fieldY = hasAggregation ? `${transformType}_y` : 'y';
   const fieldC = hasAggregation ? `${transformType}_colorValue` : 'colorValue';
 
-  let sort = null;
-  let reverse = false;
+  const sort = null;
+  const reverse = false;
 
   /*
   if (hasAggregation && hasSort) {
@@ -49,7 +49,7 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
   }
   */
 
-  let out = {
+  const out = {
     data: dataArray,
     width: containerWidth - 70,
     height: containerHeight - 146,
@@ -98,18 +98,18 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
             {}
             :
             // Force the axis labels to be blank - we will provide our own
-            {
-              text: {
-                value: '',
-              },
-            }
+          {
+            text: {
+              value: '',
+            },
+          }
           ,
         },
       },
       {
         type: 'y',
         scale: 'y',
-        title: hasAggregation ? `${transformType} ${visualisation.spec.labelY}`: visualisation.spec.labelY,
+        title: hasAggregation ? `${transformType} ${visualisation.spec.labelY}` : visualisation.spec.labelY,
       },
     ],
     marks: [
@@ -145,7 +145,7 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
             },
             stroke: {
               value: 'rgba(0, 0, 0, 0.25)',
-            }
+            },
           },
           hover: {
             fill: {
@@ -185,13 +185,13 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
               value: 'middle',
             },
             text: (visualisation.spec.datasetNameColumnX !== null || hasAggregation) ?
-              {
-                template: hasAggregation ? '{{datum.aggregationValue}}' : '{{datum.label}}',
-              }
+            {
+              template: hasAggregation ? '{{datum.aggregationValue}}' : '{{datum.label}}',
+            }
               :
-              {
-                value: '',
-              },
+            {
+              value: '',
+            },
             angle: {
               value: 90,
             },
@@ -279,33 +279,33 @@ export default function getVegaBarSpec(visualisation, data, containerHeight, con
 
   if (spec.colorColumn !== null) {
     out.scales.push({
-        "name": "color",
-        "type": "linear",
-        "domain": {"data": dataSource,"field": fieldC},
-        "range": ["#AFC6A3","#09622A"],
-        "nice": false,
-        "zero": false
+      name: 'color',
+      type: 'linear',
+      domain: { data: dataSource, field: fieldC },
+      range: ['#AFC6A3', '#09622A'],
+      nice: false,
+      zero: false,
     });
 
     out.marks[0].properties.update.fill = {
-      scale: "color",
+      scale: 'color',
       field: fieldC,
-    }
+    };
 
     if (!out.legends) out.legends = [];
 
     out.legends.push(
       {
-        "fill": "color",
-        "title": spec.colorTitle,
-        "format": "s",
-        "properties": {
-          "symbols": {
-            "shape": {"value": "circle"},
-            "strokeWidth": {"value": 0},
-            "opacity": {"value": 0.7}
-          }
-        }
+        fill: 'color',
+        title: spec.colorTitle,
+        format: 's',
+        properties: {
+          symbols: {
+            shape: { value: 'circle' },
+            strokeWidth: { value: 0 },
+            opacity: { value: 0.7 },
+          },
+        },
       }
     );
 

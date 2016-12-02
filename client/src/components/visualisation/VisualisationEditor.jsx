@@ -17,7 +17,7 @@ export default class VisualisationEditor extends Component {
       title: '',
       datasetNameColumnX: null,
       datasetNameColumnX: null,
-    }
+    };
   }
   render() {
     const props = this.props;
@@ -26,13 +26,14 @@ export default class VisualisationEditor extends Component {
       <div className="VisualisationEditor">
         <VisualisationConfig
           rootState={this.state}
-          setRootState={(newState) => {this.setState(newState)}}
+          setRootState={(newState) => { this.setState(newState); }}
           {...props}
         />
         <div style={{
           display: 'flex',
           flex: 1,
-        }}>
+        }}
+        >
           <VisualisationViewer
             visualisation={props.visualisation}
             datasets={props.datasets}

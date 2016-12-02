@@ -4,7 +4,6 @@ import getVegaAreaSpec from './Area';
 import getVegaBarSpec from './Bar';
 
 export default function getVegaAutoSpec(visualisation, data, containerHeight, containerWidth) {
-
   const hasAggregation = Boolean(visualisation.spec.datasetGroupColumnX);
   const dataArray = data.map(item => item);
   const transformType = hasAggregation ? visualisation.spec.aggregationTypeY : null;
@@ -49,7 +48,7 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
     reverse = visualisation.spec.reverseSortX;
   }
 
-  let out =  {
+  let out = {
     data: dataArray,
     width: containerWidth - 100,
     height: 25,
@@ -63,7 +62,6 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
 
   if (deets.datasetColumnX !== null && deets.datasetColumnY === null) {
     if (deets.datasetColumnXType === 'number') {
-
       out = {
         data: dataArray,
         width: containerWidth - 100,
@@ -73,63 +71,63 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
           left: 50,
           bottom: 140,
           right: 400,
-        }
+        },
       };
 
       out.scales = [
         {
-          "name": "x",
-          "type": "linear",
-          "domain": {
+          name: 'x',
+          type: 'linear',
+          domain: {
             data: dataSource,
             field: fieldY,
           },
-          "round": true,
-          "nice": true,
+          round: true,
+          nice: true,
           rangeMin: 0,
           rangeMax: 400,
-          "zero": true
+          zero: true,
         },
       ];
 
       if (deets.colorColumn !== null) {
         out.scales.push({
-            "name": "color",
-            "type": "linear",
-            "domain": {"data": dataSource,"field": "colorValue"},
-            "range": ["#AFC6A3","#09622A"],
-            "nice": false,
-            "zero": false
+          name: 'color',
+          type: 'linear',
+          domain: { data: dataSource, field: 'colorValue' },
+          range: ['#AFC6A3', '#09622A'],
+          nice: false,
+          zero: false,
         });
       }
 
       out.axes = [
         {
-          "type": "x",
-          "scale": "x",
-          "format": "s",
-          "grid": true,
-          "layer": "back",
-          "ticks": 5,
-          "title": deets.labelX,
+          type: 'x',
+          scale: 'x',
+          format: 's',
+          grid: true,
+          layer: 'back',
+          ticks: 5,
+          title: deets.labelX,
         },
       ];
 
       out.marks = [
         {
-          "name": "marks",
-          "type": "rect",
-          "from": {"data": dataSource},
-          "properties": {
-            "update": {
-              "xc": {"scale": "x","field": fieldY},
-              "yc": {"value": 18},
-              "width": {"value": 2},
-              "height": {"value": 14},
-              "opacity": {"value": 0.7},
-              "fill": {"value": "#4682b4"}
-            }
-          }
+          name: 'marks',
+          type: 'rect',
+          from: { data: dataSource },
+          properties: {
+            update: {
+              xc: { scale: 'x', field: fieldY },
+              yc: { value: 18 },
+              width: { value: 2 },
+              height: { value: 14 },
+              opacity: { value: 0.7 },
+              fill: { value: '#4682b4' },
+            },
+          },
         },
       ];
 
@@ -137,50 +135,50 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
 
       if (deets.colorColumn !== null) {
         out.marks[0].properties.update.fill = {
-          scale: "color",
-          field: "colorValue",
-        }
+          scale: 'color',
+          field: 'colorValue',
+        };
       }
 
       if (deets.colorColumn !== null) {
         out.legends.push(
           {
-            "fill": "color",
-            "title": deets.colorTitle,
-            "format": "s",
-            "properties": {
-              "symbols": {
-                "shape": {"value": "circle"},
-                "strokeWidth": {"value": 0},
-                "opacity": {"value": 0.7}
-              }
-            }
+            fill: 'color',
+            title: deets.colorTitle,
+            format: 's',
+            properties: {
+              symbols: {
+                shape: { value: 'circle' },
+                strokeWidth: { value: 0 },
+                opacity: { value: 0.7 },
+              },
+            },
           }
         );
       }
 
       if (deets.sizeColumn !== null) {
         out.scales.push({
-          "name": "size",
-          "type": "linear",
-          "domain": {"data": dataSource,"field": "sizeValue"},
-          "range": [5, 200],
-          "nice": false,
-          "zero": false
+          name: 'size',
+          type: 'linear',
+          domain: { data: dataSource, field: 'sizeValue' },
+          range: [5, 200],
+          nice: false,
+          zero: false,
         });
 
         out.legends.push(
           {
-            "size": "size",
-            "title": deets.sizeTitle,
-            "format": "s",
-            "properties": {
-              "symbols": {
-                "shape": {"value": "circle"},
-                "strokeWidth": {"value": 2},
-                "opacity": {"value": 0.7}
-              }
-            }
+            size: 'size',
+            title: deets.sizeTitle,
+            format: 's',
+            properties: {
+              symbols: {
+                shape: { value: 'circle' },
+                strokeWidth: { value: 2 },
+                opacity: { value: 0.7 },
+              },
+            },
           }
         );
 
@@ -188,19 +186,18 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
         delete out.marks[0].properties.update.width;
         delete out.marks[0].properties.update.height;
 
-        out.marks[0].properties.shape = {"value": "circle"};
-        out.marks[0].properties.strokeWidth = {"value": 2};
+        out.marks[0].properties.shape = { value: 'circle' };
+        out.marks[0].properties.strokeWidth = { value: 2 };
         out.marks[0].properties.update.size = {
-          scale: "size",
-          field: "sizeValue",
-        }
+          scale: 'size',
+          field: 'sizeValue',
+        };
       }
     }
   }
 
- if (deets.datasetColumnX === null && deets.datasetColumnY !== null) {
+  if (deets.datasetColumnX === null && deets.datasetColumnY !== null) {
     if (deets.datasetColumnYType === 'number') {
-
       out = {
         data: dataArray,
         width: 100,
@@ -210,63 +207,63 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
           left: 50,
           bottom: 40,
           right: 400,
-        }
+        },
       };
 
       out.scales = [
         {
-          "name": "y",
-          "type": "linear",
-          "domain": {
+          name: 'y',
+          type: 'linear',
+          domain: {
             data: dataSource,
             field: fieldY,
           },
-          "round": true,
-          "nice": true,
+          round: true,
+          nice: true,
           rangeMin: 0,
           rangeMax: 400,
-          "zero": true
+          zero: true,
         },
       ];
 
       if (deets.colorColumn !== null) {
         out.scales.push({
-            "name": "color",
-            "type": "linear",
-            "domain": {"data": dataSource,"field": "colorValue"},
-            "range": ["#AFC6A3","#09622A"],
-            "nice": false,
-            "zero": false
+          name: 'color',
+          type: 'linear',
+          domain: { data: dataSource, field: 'colorValue' },
+          range: ['#AFC6A3', '#09622A'],
+          nice: false,
+          zero: false,
         });
       }
 
       out.axes = [
         {
-          "type": "y",
-          "scale": "y",
-          "format": "s",
-          "grid": true,
-          "layer": "back",
-          "ticks": 5,
-          "title": deets.labelY,
+          type: 'y',
+          scale: 'y',
+          format: 's',
+          grid: true,
+          layer: 'back',
+          ticks: 5,
+          title: deets.labelY,
         },
       ];
 
       out.marks = [
         {
-          "name": "marks",
-          "type": "rect",
-          "from": {"data": dataSource},
-          "properties": {
-            "update": {
-              "yc": {"scale": "y","field": fieldY},
-              "yx": {"value": 18},
-              "height": {"value": 2},
-              "width": {"value": 14},
-              "opacity": {"value": 0.7},
-              "fill": {"value": "#4682b4"}
-            }
-          }
+          name: 'marks',
+          type: 'rect',
+          from: { data: dataSource },
+          properties: {
+            update: {
+              yc: { scale: 'y', field: fieldY },
+              yx: { value: 18 },
+              height: { value: 2 },
+              width: { value: 14 },
+              opacity: { value: 0.7 },
+              fill: { value: '#4682b4' },
+            },
+          },
         },
       ];
 
@@ -274,24 +271,24 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
 
       if (deets.colorColumn !== null) {
         out.marks[0].properties.update.fill = {
-          scale: "color",
-          field: "colorValue",
-        }
+          scale: 'color',
+          field: 'colorValue',
+        };
       }
 
       if (deets.colorColumn !== null) {
         out.legends.push(
           {
-            "fill": "color",
-            "title": deets.colorTitle,
-            "format": "s",
-            "properties": {
-              "symbols": {
-                "shape": {"value": "circle"},
-                "strokeWidth": {"value": 0},
-                "opacity": {"value": 0.7}
-              }
-            }
+            fill: 'color',
+            title: deets.colorTitle,
+            format: 's',
+            properties: {
+              symbols: {
+                shape: { value: 'circle' },
+                strokeWidth: { value: 0 },
+                opacity: { value: 0.7 },
+              },
+            },
           }
         );
       }
@@ -304,137 +301,137 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
     }
     if (deets.datasetColumnXType === 'text') {
       out = {
-        "width": 300,
-        "height": 300,
-        "data": dataArray,
-        "marks": [
+        width: 300,
+        height: 300,
+        data: dataArray,
+        marks: [
           {
-            "name": "marks",
-            "type": "rect",
-            "from": {"data": dataSource},
-            "properties": {
-              "update": {
-                "xc": {"scale": "x","field": fieldX},
-                "yc": {"scale": "y","field": fieldY},
-                "width": {"value": 14},
-                "height": {"value": 1},
-                "opacity": {"value": 0.7},
-                "fill": {"value": "#4682b4"}
-              }
-            }
-          }
+            name: 'marks',
+            type: 'rect',
+            from: { data: dataSource },
+            properties: {
+              update: {
+                xc: { scale: 'x', field: fieldX },
+                yc: { scale: 'y', field: fieldY },
+                width: { value: 14 },
+                height: { value: 1 },
+                opacity: { value: 0.7 },
+                fill: { value: '#4682b4' },
+              },
+            },
+          },
         ],
-        "scales": [
+        scales: [
           {
-            "name": "x",
-            "type": "ordinal",
-            "domain": {"data": dataSource, "field": fieldX ,"sort": true},
-            "bandSize": 21,
-            "round": true,
-            "points": true,
-            "padding": 1
+            name: 'x',
+            type: 'ordinal',
+            domain: { data: dataSource, field: fieldX, sort: true },
+            bandSize: 21,
+            round: true,
+            points: true,
+            padding: 1,
           },
           {
-            "name": "y",
-            "type": "linear",
-            "domain": {"data": dataSource,"field": fieldY},
-            "rangeMin": 300,
-            "rangeMax": 0,
-            "round": true,
-            "nice": true,
-            "zero": true
-          }
+            name: 'y',
+            type: 'linear',
+            domain: { data: dataSource, field: fieldY },
+            rangeMin: 300,
+            rangeMax: 0,
+            round: true,
+            nice: true,
+            zero: true,
+          },
         ],
-        "axes": [
+        axes: [
           {
-            "type": "x",
-            "scale": "x",
-            "grid": false,
-            "ticks": 5,
-            "title": deets.labelX,
-            "properties": {
-              "labels": {
-                "text": {"template": "{{ datum[\"data\"] | truncate:25 }}"},
-                "angle": {"value": 270},
-                "align": {"value": "right"},
-                "baseline": {"value": "middle"}
-              }
-            }
+            type: 'x',
+            scale: 'x',
+            grid: false,
+            ticks: 5,
+            title: deets.labelX,
+            properties: {
+              labels: {
+                text: { template: '{{ datum["data"] | truncate:25 }}' },
+                angle: { value: 270 },
+                align: { value: 'right' },
+                baseline: { value: 'middle' },
+              },
+            },
           },
           {
-            "type": "y",
-            "scale": "y",
-            "format": "s",
-            "grid": true,
-            "layer": "back",
-            "title": deets.labelY,
-          }
-        ]
+            type: 'y',
+            scale: 'y',
+            format: 's',
+            grid: true,
+            layer: 'back',
+            title: deets.labelY,
+          },
+        ],
       };
     } else {
       out = {
-        "width": 300,
-        "height": 300,
-        "padding": "auto",
-        "data": dataArray,
-        "scales": [
+        width: 300,
+        height: 300,
+        padding: 'auto',
+        data: dataArray,
+        scales: [
           {
-            "name": "x",
-            "type": "linear",
-            "domain": {"data": dataSource,"field": fieldX},
+            name: 'x',
+            type: 'linear',
+            domain: { data: dataSource, field: fieldX },
             range: 'width',
-            "round": true,
-            "nice": true,
-            "zero": true
+            round: true,
+            nice: true,
+            zero: true,
           },
           {
-            "name": "y",
-            "type": "linear",
-            "domain": {"data": dataSource,"field": fieldY},
+            name: 'y',
+            type: 'linear',
+            domain: { data: dataSource, field: fieldY },
             range: 'height',
-            "round": true,
-            "nice": true,
-            "zero": true,
+            round: true,
+            nice: true,
+            zero: true,
           },
         ],
-        "axes": [
+        axes: [
           {
-            "type": "x",
-            "scale": "x",
-            "format": "s",
-            "grid": true,
-            "layer": "back",
-            "ticks": 5,
-            "title": deets.labelX,
+            type: 'x',
+            scale: 'x',
+            format: 's',
+            grid: true,
+            layer: 'back',
+            ticks: 5,
+            title: deets.labelX,
           },
           {
-            "type": "y",
-            "scale": "y",
-            "format": "s",
-            "grid": true,
-            "layer": "back",
-            "title": deets.labelY,
+            type: 'y',
+            scale: 'y',
+            format: 's',
+            grid: true,
+            layer: 'back',
+            title: deets.labelY,
           },
         ],
-        "marks": [
+        marks: [
           {
-            "name": "marks",
-            "type": "symbol",
-            "from": {"data": dataSource},
-            "properties": {
-              "update": {
-                "x": {"scale": "x","field": fieldX},
-                "y": {"scale": "y","field": fieldY},
-                "size": {"value": 30},
-                "shape": {"value": "circle"},
-                "strokeWidth": {"value": 2},
-                "opacity": {"value": 0.9},
-                fillOpacity: {value: 0},
-                "stroke": {"value": "#4682b4"},
-                "fill": {"value": "transparent"}
-              }
-            }
-          }
+            name: 'marks',
+            type: 'symbol',
+            from: { data: dataSource },
+            properties: {
+              update: {
+                x: { scale: 'x', field: fieldX },
+                y: { scale: 'y', field: fieldY },
+                size: { value: 30 },
+                shape: { value: 'circle' },
+                strokeWidth: { value: 2 },
+                opacity: { value: 0.9 },
+                fillOpacity: { value: 0 },
+                stroke: { value: '#4682b4' },
+                fill: { value: 'transparent' },
+              },
+            },
+          },
         ],
         legends: [],
       };
@@ -442,12 +439,12 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
 
     if (deets.colorColumn !== null) {
       out.scales.push({
-        "name": "color",
-        "type": "linear",
-        "domain": {"data": dataSource,"field": "colorValue"},
-        "range": ["#AFC6A3","#09622A"],
-        "nice": false,
-        "zero": false
+        name: 'color',
+        type: 'linear',
+        domain: { data: dataSource, field: 'colorValue' },
+        range: ['#AFC6A3', '#09622A'],
+        nice: false,
+        zero: false,
       });
 
       if (out.legends == null) {
@@ -456,51 +453,51 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
 
       out.legends.push(
         {
-          "fill": "color",
-          "title": deets.colorTitle,
-          "format": "s",
-          "properties": {
-            "symbols": {
-              "shape": {"value": "circle"},
-              "strokeWidth": {"value": 0},
-              "opacity": {"value": 0.7}
-            }
-          }
+          fill: 'color',
+          title: deets.colorTitle,
+          format: 's',
+          properties: {
+            symbols: {
+              shape: { value: 'circle' },
+              strokeWidth: { value: 0 },
+              opacity: { value: 0.7 },
+            },
+          },
         }
       );
 
       out.marks[0].properties.update.stroke = {
-        scale: "color",
-        field: "colorValue",
-      }
+        scale: 'color',
+        field: 'colorValue',
+      };
       out.marks[0].properties.update.fill = {
-        scale: "color",
-        field: "colorValue",
-      }
+        scale: 'color',
+        field: 'colorValue',
+      };
     }
 
     if (deets.sizeColumn !== null) {
       out.scales.push({
-        "name": "size",
-        "type": "linear",
-        "domain": {"data": dataSource,"field": "sizeValue"},
-        "range": [5, 200],
-        "nice": false,
-        "zero": false
+        name: 'size',
+        type: 'linear',
+        domain: { data: dataSource, field: 'sizeValue' },
+        range: [5, 200],
+        nice: false,
+        zero: false,
       });
 
       out.legends.push(
         {
-          "size": "size",
-          "title": deets.sizeTitle,
-          "format": "s",
-          "properties": {
-            "symbols": {
-              "shape": {"value": "circle"},
-              "strokeWidth": {"value": 2},
-              "opacity": {"value": 0.7}
-            }
-          }
+          size: 'size',
+          title: deets.sizeTitle,
+          format: 's',
+          properties: {
+            symbols: {
+              shape: { value: 'circle' },
+              strokeWidth: { value: 2 },
+              opacity: { value: 0.7 },
+            },
+          },
         }
       );
 
@@ -508,12 +505,12 @@ export default function getVegaAutoSpec(visualisation, data, containerHeight, co
       delete out.marks[0].properties.update.width;
       delete out.marks[0].properties.update.height;
 
-      out.marks[0].properties.shape = {"value": "circle"};
-      out.marks[0].properties.strokeWidth = {"value": 2};
+      out.marks[0].properties.shape = { value: 'circle' };
+      out.marks[0].properties.strokeWidth = { value: 2 };
       out.marks[0].properties.update.size = {
-        scale: "size",
-        field: "sizeValue",
-      }
+        scale: 'size',
+        field: 'sizeValue',
+      };
     }
   }
 

@@ -17,7 +17,7 @@ export default function VisualisationViewer(props) {
 
       if (props.visualisation.spec.datasetColumnX === null
         && props.visualisation.spec.datasetColumnY === null) {
-        return(
+        return (
           <span
             style={{
               display: 'flex',
@@ -26,7 +26,7 @@ export default function VisualisationViewer(props) {
               alignSelf: 'center',
             }}
           > Choose a column to get started </span>
-        )
+        );
       }
       return (
         <Chart
