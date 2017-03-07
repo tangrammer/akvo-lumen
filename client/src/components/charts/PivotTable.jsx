@@ -5,9 +5,9 @@ require('../../styles/PivotTable.scss');
 
 const meanPixelsPerChar = 7.5; // Used for calculating min-widths for columns
 const defaultCategoryWidth = 100; // Number of pixels to wrap category columns at
+const maxTitleLength = 64;
 
 const formatTitle = (title) => {
-  const maxTitleLength = 64;
   if (!title) return title;
   if (title.toString().length <= maxTitleLength) return title;
 
@@ -37,17 +37,24 @@ const getColumnHeaderBody = (cell, index, spec) => {
 
 /* Returns the min column width that will limit wrapping to two lines.
 /* This is not currently possible with a stylesheet-only approach. */
-const getMinRowTitleWidth = text =>
-  Math.min(
-    Math.ceil(((text != null ? text.toString().length : 0) * meanPixelsPerChar) / 2),
-    32 * meanPixelsPerChar
-  );
+const getMinRowTitleWidth = (text) => {
+  const length = text != null ? text.toString().length : 0;
 
-const getMinCategoryTitleWidth = text =>
-  Math.min(
-    (text != null ? text.toString().length : 0) * meanPixelsPerChar,
+  if (length < (maxTitleLength / 2)) {
+    return Math.ceil(length * meanPixelsPerChar);
+  }
+
+  return Math.ceil((maxTitleLength / 2) * meanPixelsPerChar);
+};
+
+const getMinCategoryTitleWidth = (text) => {
+  const length = text != null ? text.toString().length : 0;
+
+  return Math.min(
+    Math.ceil(length * meanPixelsPerChar),
     defaultCategoryWidth
   );
+};
 
 const formatCell = (index, cell, spec, columns) => {
   const type = columns[index].type;
