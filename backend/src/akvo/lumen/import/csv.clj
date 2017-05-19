@@ -86,7 +86,7 @@
   "Imports the given CSV data into a PostgreSQL table"
   [tenant-conn table-name path headers?]
   (try
-    (with-open [r (-> path io/file io/input-stream AutoDetectReader.)]
+    (with-open [r (-> path io/input-stream AutoDetectReader.)]
       (let [data (csv/read-csv r)
             headers (when headers? (first data))
             rows (if headers? (rest data) data)
