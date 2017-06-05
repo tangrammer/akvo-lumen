@@ -75,6 +75,10 @@ module.exports = {
       template: 'index.ejs',
       filename: 'index-pub.html',
       chunks: ['pub']
+    }),
+    new HtmlWebpackPlugin({
+      filename: 'index-landing.html',
+      template: 'index-landing.ejs'
     })
   ]
 };
