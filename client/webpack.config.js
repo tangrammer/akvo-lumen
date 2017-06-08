@@ -77,8 +77,9 @@ module.exports = {
       chunks: ['pub']
     }),
     new HtmlWebpackPlugin({
+      template: 'index-landing.ejs',
       filename: 'index-landing.html',
-      template: 'index-landing.ejs'
+      chunks: []
     })
   ]
 };
