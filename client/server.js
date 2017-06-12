@@ -26,6 +26,7 @@ new WebpackDevServer(webpack(config), {
   historyApiFallback: {
     rewrites: [
       { from: '^/favicon.ico$', to: 'favicon.ico' },
+      { from: '^/landing/.*$', to: '/assets/index-landing.html' },
       { from: '^/s/.*$', to: '/assets/index-pub.html' },
       { from: '^.*$', to: '/assets/index.html' }
     ]
@@ -34,24 +35,5 @@ new WebpackDevServer(webpack(config), {
   if (err) {
     console.log(err);
   }
-
   console.log('Listening at t1.lumen.localhost:3030');
-});
-
-new WebpackDevServer(webpack(config), {
-  hot: true,
-  publicPath: config.output.publicPath,
-  disablehostCheck: true,
-  historyApiFallback: {
-    rewrites: [
-      { from: '^/favicon.ico$', to: 'favicon.ico' },
-      { from: '^.*$', to: '/assets/index-landing.html' }
-    ]
-  }
-}).listen(3031, 'www.lumen.localhost', function(err, restult) {
-  if (err) {
-    console.log(err);
-  }
-
-  console.log('Listening at www.lumen.localhost:3031');
 });

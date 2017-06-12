@@ -8,14 +8,18 @@ var ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 const isProd = process.env.NODE_ENV === 'production';
 
+const createEntryPoint = (entryPoint) => {
+  return [
+    'webpack-dev-server/client?http://0.0.0.0:3030', // WebpackDevServer host and port
+    'webpack/hot/only-dev-server', // "only" prevents reload on syntax errors
+    entryPoint
+  ]
+}
+
 const entry = {
   app: isProd ? [
       './src/index.jsx'
-    ] : [
-      'webpack-dev-server/client?http://0.0.0.0:3030', // WebpackDevServer host and port
-      'webpack/hot/only-dev-server', // "only" prevents reload on syntax errors
-      './src/index.jsx'
-    ],
+    ] : createEntryPoint('./src/index.jsx'),
   pub: './src/index-pub.jsx'
 }
 
