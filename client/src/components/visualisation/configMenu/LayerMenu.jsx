@@ -24,17 +24,11 @@ export default class LayerMenu extends Component {
 
     return (
       <div className="LayerMenu">
-        <div
-          className="controlRow"
-        >
-          <span
-            className="titleContainer"
-          >
+        <div className="controlRow">
+          <span className="titleContainer">
             <h3>Layers</h3>
           </span>
-          <span
-            className="buttonContainer"
-          >
+          <span className="buttonContainer">
             <button
               className="addLayer clickable noSelect"
               onClick={onAddLayer}
