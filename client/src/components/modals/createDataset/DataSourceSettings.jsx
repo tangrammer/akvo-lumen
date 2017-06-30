@@ -48,7 +48,7 @@ export default class DataSourceSettings extends Component {
 
   render() {
     return (
-      <div className="FileSelection">
+      <div className={`FileSelection ${this.props.dataSource.kind === 'DATA_FILE' ? 'file' : ''}`}>
         <div className="contents">
           {this.renderFileSelection()}
         </div>
