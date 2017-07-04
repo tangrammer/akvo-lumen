@@ -13,9 +13,11 @@ export default class DashboardHeader extends Component {
     const { onDashboardAction } = this.props;
     const user = {
       buttonText: 'User',
+      customClass: 'notImplemented',
     };
     const download = {
       buttonText: 'Download',
+      customClass: 'notImplemented',
     };
     const share = {
       buttonText: 'Share',
@@ -23,6 +25,7 @@ export default class DashboardHeader extends Component {
     };
     const overflow = {
       buttonText: 'Overflow',
+      customClass: 'notImplemented',
     };
 
     return ([
@@ -51,6 +54,8 @@ export default class DashboardHeader extends Component {
     return (
       <EntityTypeHeader
         title={this.props.title || 'Untitled dashboard'}
+        onChangeTitle={this.props.onChangeTitle}
+        onBeginEditTitle={this.props.onBeginEditTitle}
         saveStatus={saveStatus}
         actionButtons={actionButtons}
       />
@@ -62,4 +67,6 @@ DashboardHeader.propTypes = {
   isUnsavedChanges: PropTypes.bool,
   title: PropTypes.string.isRequired,
   onDashboardAction: PropTypes.func.isRequired,
+  onChangeTitle: PropTypes.func.isRequired,
+  onBeginEditTitle: PropTypes.func.isRequired,
 };

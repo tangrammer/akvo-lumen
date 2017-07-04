@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import EntityTypeHeader from './entity-editor/EntityTypeHeader';
-import ConfirmUserAction from './modals/ConfirmUserAction';
-import InviteUser from './modals/InviteUser';
+import ConfirmUserAction from './users/ConfirmUserAction';
+import InviteUser from './users/InviteUser';
 import * as api from '../api';
 
 require('./entity-editor/EntityTypeHeader.scss');
@@ -164,13 +164,13 @@ class Users extends Component {
   getUsers() {
     api.get('/api/admin/users')
       .then(response => response.json())
-      .then(users => this.setState({ users }));
+      .then(({ users }) => this.setState({ users }));
   }
 
   getInvitations() {
     api.get('/api/admin/invites')
       .then(response => response.json())
-      .then(invitations => this.setState({ invitations }));
+      .then(({ invites }) => this.setState({ invitations: invites }));
   }
 
   getUserActionButtons() {

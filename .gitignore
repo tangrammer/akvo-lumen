@@ -21,6 +21,9 @@ backend/profiles.clj
 backend/dev/resources/local.edn
 backend/dev/src/local.clj
 
+# CI
+ci/dev/deployment.yaml
+ci/prod/deployment.yaml
 
 # From https://github.com/github/gitignore
 

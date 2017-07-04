@@ -1,10 +1,10 @@
 (ns akvo.lumen.lib.pivot-test
   (:require [akvo.lumen.component.tenant-manager :refer [tenant-manager]]
-            [akvo.lumen.component.transformation-engine :refer [transformation-engine]]
             [akvo.lumen.fixtures :refer [test-tenant-spec
                                          migrate-tenant
                                          rollback-tenant]]
             [akvo.lumen.import.csv-test :refer [import-file]]
+            [akvo.lumen.lib :as lib]
             [akvo.lumen.lib.aggregation :as aggregation]
             [akvo.lumen.transformation :as tf]
             [clojure.test :refer :all]
@@ -14,12 +14,10 @@
 (def test-system
   (->
    (component/system-map
-    :transformation-engine (transformation-engine {})
     :tenant-manager (tenant-manager {})
     :db (hikaricp {:uri (:db_uri test-tenant-spec)}))
    (component/system-using
-    {:transformation-engine [:tenant-manager]
-     :tenant-manager [:db]})))
+    {:tenant-manager [:db]})))
 
 (def ^:dynamic *tenant-conn*)
 (def ^:dynamic *dataset-id*)
@@ -30,15 +28,14 @@
   (binding [*tenant-conn* (:spec (:db test-system))
             *dataset-id* (import-file "pivot.csv" {:dataset-name "pivot"
                                                    :has-column-headers? true})]
-    (tf/schedule *tenant-conn*
-                 (:transformation-engine test-system)
-                 *dataset-id*
-                 {:type :transformation
-                  :transformation {"op" "core/change-datatype"
-                                   "args" {"columnName" "c3"
-                                           "newType" "number"
-                                           "defaultValue" 0}
-                                   "onError" "default-value"}})
+    (tf/apply *tenant-conn*
+              *dataset-id*
+              {:type :transformation
+               :transformation {"op" "core/change-datatype"
+                                "args" {"columnName" "c3"
+                                        "newType" "number"
+                                        "defaultValue" 0}
+                                "onError" "default-value"}})
     (f)
     (alter-var-root #'test-system component/stop)
     (rollback-tenant test-tenant-spec)))
@@ -48,38 +45,38 @@
 (deftest ^:functional test-pivot
   (let [query (partial aggregation/query *tenant-conn* *dataset-id* "pivot")]
     (testing "Empty query"
-      (let [{:keys [status body]} (query {"aggregation" "count"})]
-        (is (= status 200))
-        (is (= body {:columns [{"type" "number" "title" "Total"}]
-                     :rows [[8]]
-                     :metadata {"categoryColumnTitle" nil}}))))
+      (let [[tag query-result] (query {"aggregation" "count"})]
+        (is (= tag ::lib/ok))
+        (is (= query-result {:columns [{"type" "number" "title" "Total"}]
+                             :rows [[8]]
+                             :metadata {"categoryColumnTitle" nil}}))))
 
     (testing "Empty query with filter"
-      (let [{:keys [status body]} (query {"aggregation" "count"
-                                          "filters" [{"column" "c1"
-                                                      "value" "a1"
-                                                      "operation" "keep"
-                                                      "strategy" "is"}]})]
-        (is (= status 200))
-        (is (= body {:columns [{"type" "number" "title" "Total"}]
-                     :rows [[4]]
-                     :metadata {"categoryColumnTitle" nil}}))))
+      (let [[tag query-result] (query {"aggregation" "count"
+                                       "filters" [{"column" "c1"
+                                                   "value" "a1"
+                                                   "operation" "keep"
+                                                   "strategy" "is"}]})]
+        (is (= tag ::lib/ok))
+        (is (= query-result {:columns [{"type" "number" "title" "Total"}]
+                             :rows [[4]]
+                             :metadata {"categoryColumnTitle" nil}}))))
 
     (testing "Category column only"
-      (let [{:keys [status body]} (query {"aggregation" "count"
-                                          "categoryColumn" "c1"})]
-        (is (= status 200))
-        (is (= body {:columns [{"title" "" "type" "text"}
-                               {"title" "a1" "type" "number"}
-                               {"title" "a2" "type" "number"}]
-                     :rows [["Total" 4 4]]
-                     :metadata {"categoryColumnTitle" "A"}}))))
+      (let [[tag query-result] (query {"aggregation" "count"
+                                       "categoryColumn" "c1"})]
+        (is (= tag ::lib/ok))
+        (is (= query-result {:columns [{"title" "" "type" "text"}
+                                       {"title" "a1" "type" "number"}
+                                       {"title" "a2" "type" "number"}]
+                             :rows [["Total" 4 4]]
+                             :metadata {"categoryColumnTitle" "A"}}))))
 
     (testing "Row Column Only"
-      (let [{:keys [status body]} (query {"aggregation" "count"
-                                          "rowColumn" "c2"})]
-        (is (= status 200))
-        (is (= body
+      (let [[tag query-result] (query {"aggregation" "count"
+                                       "rowColumn" "c2"})]
+        (is (= tag ::lib/ok))
+        (is (= query-result
                {:columns [{"type" "text", "title" "B"}
                           {"type" "number", "title" "Total"}],
                 :rows [["b1" 4]
@@ -87,11 +84,11 @@
                 :metadata {"categoryColumnTitle" nil}}))))
 
     (testing "Row & Category Column with count aggregation"
-      (let [{:keys [status body]} (query {"aggregation" "count"
-                                          "categoryColumn" "c1"
-                                          "rowColumn" "c2"})]
-        (is (= status 200))
-        (is (= body
+      (let [[tag query-result] (query {"aggregation" "count"
+                                       "categoryColumn" "c1"
+                                       "rowColumn" "c2"})]
+        (is (= tag ::lib/ok))
+        (is (= query-result
                {:columns [{"title" "B", "type" "text"}
                           {"title" "a1", "type" "number"}
                           {"title" "a2", "type" "number"}]
@@ -100,12 +97,12 @@
                 :metadata {"categoryColumnTitle" "A"}}))))
 
     (testing "Row & Category Column with mean aggregation"
-      (let [{:keys [status body]} (query {"aggregation" "mean"
-                                          "categoryColumn" "c1"
-                                          "rowColumn" "c2"
-                                          "valueColumn" "c3"})]
-        (is (= status 200))
-        (is (= body
+      (let [[tag query-result] (query {"aggregation" "mean"
+                                       "categoryColumn" "c1"
+                                       "rowColumn" "c2"
+                                       "valueColumn" "c3"})]
+        (is (= tag ::lib/ok))
+        (is (= query-result
                {:columns [{"title" "B", "type" "text"}
                           {"title" "a1", "type" "number"}
                           {"title" "a2", "type" "number"}]
@@ -114,16 +111,16 @@
                 :metadata {"categoryColumnTitle" "A"}}))))
 
     (testing "Row & Category Column with mean aggregation and filter"
-      (let [{:keys [status body]} (query {"aggregation" "mean"
-                                          "categoryColumn" "c1"
-                                          "rowColumn" "c2"
-                                          "valueColumn" "c3"
-                                          "filters" [{"column" "c3"
-                                                      "value" "11"
-                                                      "operation" "remove"
-                                                      "strategy" "isHigher"}]})]
-        (is (= status 200))
-        (is (= body
+      (let [[tag query-result] (query {"aggregation" "mean"
+                                       "categoryColumn" "c1"
+                                       "rowColumn" "c2"
+                                       "valueColumn" "c3"
+                                       "filters" [{"column" "c3"
+                                                   "value" "11"
+                                                   "operation" "remove"
+                                                   "strategy" "isHigher"}]})]
+        (is (= tag ::lib/ok))
+        (is (= query-result
                {:columns [{"title" "B" "type" "text"}
                           {"title" "a1" "type" "number"}
                           {"title" "a2" "type" "number"}]

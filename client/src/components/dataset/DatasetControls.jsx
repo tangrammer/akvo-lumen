@@ -32,7 +32,7 @@ export default class DatasetControls extends Component {
               className="datasetEditorToggle clickable"
               onClick={() => this.onEditorToggleClick()}
             >
-            Dataset editor
+            + Transform
             </button>
             {this.state.editorMenuActive &&
               <ContextMenu
@@ -40,10 +40,12 @@ export default class DatasetControls extends Component {
                   {
                     label: 'Bulk row editor',
                     value: 'bulk-row-editor',
+                    customClass: 'notImplemented',
                   },
                   {
                     label: 'Bulk column editor',
                     value: 'bulk-column-editor',
+                    customClass: 'notImplemented',
                   },
                   {
                     label: 'Combine Columns',
@@ -56,6 +58,7 @@ export default class DatasetControls extends Component {
                   {
                     label: 'Merge datasets',
                     value: 'merge-datasets',
+                    customClass: 'notImplemented',
                   },
                 ]}
                 onOptionSelected={(item) => {
@@ -66,6 +69,7 @@ export default class DatasetControls extends Component {
                   left: 0,
                   width: '16rem',
                 }}
+                onWindowClick={this.onEditorToggleClick}
               />
             }
           </span>
@@ -99,7 +103,7 @@ export default class DatasetControls extends Component {
               className="transformationLogToggle clickable"
               onClick={this.props.onToggleTransformationLog}
             >
-              Transformation log {pendingTransformationsCount > 0 && `(${pendingTransformationsCount})`}
+              <i className="fa fa-list-ol" aria-hidden="true" /> {pendingTransformationsCount > 0 && `(${pendingTransformationsCount})`}
             </button>
           </span>
         </span>

@@ -2,134 +2,69 @@
 
 .LibraryHeader {
     height: 9rem;
+    display: flex;
+    flex-direction: column;
 
     .row {
+        display: flex;
         width: 100%;
         position: relative;
-        padding: 0 1rem;
-
-        > * {
-            vertical-align: top;
-            display: inline-block;
-            padding: 0.5rem 0.5rem;
-        }
+        align-items: center;
     }
 
     .rowPrimary {
-        padding-top: 0.5rem;
-        height: 5rem;
-        background: rgba($blueGrey, 0.1);
+        flex: 5;
+        padding: 0 1rem;
+        background: rgba($lightGrey, 0.5);
+        border-bottom: 1px solid $lightGrey;
     }
 
     .rowSecondary {
-        height: 3.5rem;
-        border-bottom: 1px solid $blueGrey;
-        background: rgba($blueGrey, 0.1);
+        flex: 3;
+        border-bottom: 1px solid rgba($lightGrey, 1);
     }
 
     .LocationIndicator {
-        color: $strongBlue;
-        width: 55%;
-        height: 100%;
+        flex: 2;
+        display: flex;
+        align-items: center;
         overflow: hidden;
 
-        .contents {
-            padding-right: 1rem;
+        .location {
+            color: $lumenGreen;
         }
     }
 
     .LibraryCreateButton {
-        width: 7rem;
-        margin-right: 1.5rem;
-        position: relative;
+        display: flex;
+        flex: 3;
+        max-width: 340px;
+        flex-direction: row;
+        justify-content: space-between;
+        margin-right: 1rem;
 
-        .SelectMenu {
-            height: 100%;
-
-            .Select-control {
-                @include button($mintGreen, black);
-
-                text-align: left;
-
-                &:hover {
-                    opacity: 0.8;
-                }
-            }
-
-            .Select-placeholder {
-                color: $white;
-                margin-top: -2px;
-            }
-
-            .Select-arrow {
-                border-color: $white transparent transparent;
-                border-width: 10px 6px 6px;
-                margin-top: -2px;
-            }
-
-            .Select.is-open {
-                .Select-control {
-                    background-color: $lightGreen;
-                }
-
-                .Select-placeholder {
-                    color: $mintGreen;
-                }
-
-                .Select-arrow {
-                    top: 0px;
-                    border-color: $mintGreen transparent transparent;
-                }
-            }
-
-            .Select-arrow-zone {
-                position: absolute;
-                top: 1px;
-                right: 0;
-                padding-top: 10px;
-                padding-right: 10px;
-            }
-
-            .Select-menu-outer {
-                width: 12rem;
-                right: 0;
-                top: 115%;
-                border-color: $lightGreen;
-                box-shadow: 0rem 0rem 0.25rem rgba(0, 0, 0, 0.15) !important;
-                border-radius: 0;
-            }
-
-            .Select-option {
-                padding: 0.8rem;
-                color: $strongBlue;
-                box-sizing: border-box;
-                border: 0.1rem solid transparent;
-
-                &:hover {
-                    color: $mintGreen;
-                    border: 0.1rem solid $lightGreen;
-                    background-color: inherit;
-                }
+        button {
+            flex: 1;
+            text-align: center;
+            @media (min-width: 1100px) {
+                margin-right: 10px;
             }
         }
     }
 
     .LibrarySearch {
-        width: calc(45% - 8.5rem);
-        height: 3.5rem;
-        position: relative;
-        text-align: right;
+        display: flex;
+        flex: 3;
+        justify-content: space-around;
 
         input {
-            width: calc(100% - 6rem);
+            flex: 1;
             padding: 0.25rem 0.75rem;
             color: $darkGrey;
-            vertical-align: top;
         }
 
         .clear {
-            position: absolute;
-            color: $blueGrey;
+            color: $black;
             line-height: 1.5rem;
             margin-left: -2rem;
             padding: 0.5rem;
@@ -137,10 +72,10 @@
         }
 
         .submit {
-            @include btnOutline($mintGreen, $mintGreen);
+            @include btnOutline($anchorLink, $anchorLink);
 
-            border-left: none;
-            max-width: 6rem;
+            width: 6rem;
+            margin-left: 1rem;
         }
     }
 
@@ -157,121 +92,19 @@
                 display: inline-block;
                 padding: 0.75rem 1.5rem;
                 text-align: center;
-                color: $blueGrey;
                 transition: background-color 0.5s ease;
+                color: rgba($black, 0.7);
 
                 &:hover {
-                    color: $midGrey;
+                    color: rgba($black, 1);
                 }
 
                 &.selected {
-                    color: $mintGreen;
-                    border: 1px solid $blueGrey;
-                    border-top: 2px solid $mintGreen;
-                    border-bottom: 1px solid white;
-                    margin-top: 1px;
+                    color: rgba($black, 1);
+                    border-bottom: 4px solid rgba($black, 1);
+                    margin-top: 2px;
                     position: relative;
-                    background: white;
                 }
-            }
-        }
-
-        @media (max-width: 1200px) {
-            width: 50%;
-
-            ul li {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-        }
-    }
-
-    .LibraryDisplayMenu {
-        width: 36%;
-        position: relative;
-        padding-top: 13px;
-        height: 100%;
-
-        @media (max-width: 1200px) {
-            width: 50%;
-        }
-
-        .sortOrderLabel {
-            color: rgba(black, 0.3);
-            line-height: 2.5rem;
-            width: 4rem;
-            display: inline-block;
-        }
-
-        .SelectMenu {
-            width: 8rem;
-            margin-right: calc(100% - 18rem);
-            height: 2.5rem;
-            display: inline-block;
-            vertical-align: top;
-
-            .Select-control {
-                border: 0;
-            }
-
-            .Select-placeholder {
-                color: $strongBlue;
-                text-align: right;
-                padding-right: 1.75rem;
-                padding-left: 0;
-            }
-
-            .Select-arrow-zone {
-                padding-left: 25px;
-
-                .Select-arrow {
-                    border-color: $strongBlue transparent transparent;
-                }
-            }
-
-            .Select-menu-outer {
-                width: 10rem;
-                right: 0;
-                top: 115%;
-                border-color: $blueGrey;
-                box-shadow: 0rem 0rem 0.25rem rgba(0, 0, 0, 0.15) !important;
-                border-radius: 0;
-            }
-
-            .Select-option {
-                padding: 0.8rem;
-                color: $blueGrey;
-                box-sizing: border-box;
-                border: 0.1rem solid transparent;
-
-                &:hover {
-                    color: $strongBlue;
-                    border: 0.1rem solid $strongBlue;
-                    background-color: inherit;
-                }
-            }
-        }
-
-        .displayControls {
-            display: inline-block;
-            width: 6rem;
-            height: 2.5rem;
-            position: relative;
-            vertical-align: top;
-            text-align: right;
-
-            .control {
-                display: inline-block;
-                color: $strongBlue;
-                width: 2rem;
-                height: 2rem;
-                font-size: 1.5rem;
-            }
-
-            .displayGrid {}
-
-            .displayList {
-                margin-left: 1rem;
             }
         }
     }

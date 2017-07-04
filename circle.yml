@@ -2,19 +2,23 @@ machine:
   java:
     version: openjdk8
   node:
-    version: 6.9.1
+    version: 5.7.0
   environment:
     PROJECT_NAME: akvo-lumen
     PROD_CLUSTER_NAME: lumen
     DEV_CLUSTER_NAME: dev-cluster
     CLOUDSDK_COMPUTE_ZONE: europe-west1-d
     DEBIAN_FRONTEND: noninteractive
+    LEIN_FAST_TRAMPOLINE: true
   services:
     - docker
 
 dependencies:
+  cache_directories:
+    - "~/.package_cache"
+
   pre:
-    ## App specific
+    # Keycloak
     - ./server.sh build:
         pwd: keycloak
     - ./server.sh run:
@@ -29,7 +33,8 @@ dependencies:
     # Client
     - npm config set spin false:
         pwd: client
-    - npm install:
+    - npm install -g npm-cache
+    - npm-cache install:
         pwd: client
 
 test:

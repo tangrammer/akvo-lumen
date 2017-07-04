@@ -18,6 +18,10 @@ new WebpackDevServer(webpack(config), {
       target: "http://t1.lumen.localhost:3000",
       secure: false
     },
+    '/verify/**': {
+      target: "http://t1.lumen.localhost:3000",
+      secure: false
+      },
     '/env': {
       target: "http://t1.lumen.localhost:3000",
       secure: false
