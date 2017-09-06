@@ -2,6 +2,7 @@ const mapLayerSpec = {
   datasetId: null,
   visible: true,
   filters: [],
+  geopointColumn: null,
   title: '', // *Layer* title
   latitude: null,
   longitude: null,
