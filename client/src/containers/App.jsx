@@ -11,6 +11,7 @@ import Resources from '../components/Resources';
 import Main from './Main';
 import WorkspaceNav from '../components/WorkspaceNav';
 import AdminNav from '../components/AdminNav';
+import AkvoMapsDemo from '../components/demo/AkvoMapsDemo';
 
 export default function App({ history, location }) {
   return (
@@ -31,6 +32,11 @@ export default function App({ history, location }) {
           <Route
             path="dataset/:datasetId"
             components={{ sidebar: WorkspaceNav, content: Dataset }}
+            location={location}
+          />
+          <Route
+            path="visualisation/demo/akvo-maps"
+            components={{ sidebar: WorkspaceNav, content: AkvoMapsDemo }}
             location={location}
           />
           <Route
