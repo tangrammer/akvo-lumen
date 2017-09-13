@@ -4,30 +4,40 @@
 
 ```
 {
-  version: 1,
+  "version": 1,
+  "baseLayer": "street",
+  "layers": []
+}
+```
+
+### Map Layer
+
+```
+{
+  "datasetId": null,
   "filters": [],
+  "visible": true,
   "showLegend": true,
-  "latitude": "c1",
-  "longitude": "c2",
+  "geopointColumn", "d1",
   "pointColorColumn": "c6",
   "pointColorMapping": [
-{
-    op: "equals",
-    value: "Male",
-    color: "#123321",
-},{
-    op: "lessThan",
-    value: 10,
-    color: "#321fff"
-},{
-    op: "between",
-    value: [10, 20],
-    color: "#ff0000"
-},{
-    op: "heatMap",
-    value: [0, 100],
-    color: ["#ff0000", "#00ff00"]
-},
+    {
+      op: "equals",
+      value: "Male",
+      color: "#123321",
+    },{
+      op: "lessThan",
+      value: 10,
+      color: "#321fff"
+    },{
+      op: "between",
+      value: [10, 20],
+      color: "#ff0000"
+    },{
+      op: "heatMap",
+      value: [0, 100],
+      color: ["#ff0000", "#00ff00"]
+    },
   ],
   "popup": [{
     "header": true,
@@ -37,7 +47,11 @@
   }, {
     "column": "c12",
     "image": true
-  }]
+  }],
+  "legend": {
+    "title": null,
+    "visible": true,
+    "position": "bottom"
 }
 ```
 
