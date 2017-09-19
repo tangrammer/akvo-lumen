@@ -31,6 +31,16 @@ class Modal extends Component {
     this.handleOnSubmit = this.handleOnSubmit.bind(this);
   }
 
+  componentDidMount() {
+    // Close modal on navigation
+    window.addEventListener(
+      'popstate',
+      () => this.props.dispatch(hideModal()),
+      { once: true }
+    );
+  }
+
+
   handleOnCancel() {
     this.props.dispatch(hideModal());
   }
