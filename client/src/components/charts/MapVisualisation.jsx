@@ -139,6 +139,7 @@ export default class MapVisualisation extends Component {
   renderLeafletMap(nextProps) {
     const { visualisation, datasets, width, height } = nextProps;
     const { tileUrl, tileAttribution } = getBaseLayerAttributes(visualisation.spec.baseLayer);
+    const layers = visualisation.spec.layers;
     const layer = visualisation.spec.layers[0];
     const layerDataset = layer ? datasets[layer.datasetId] : null;
 
@@ -214,7 +215,7 @@ export default class MapVisualisation extends Component {
     // Add or update the windshaft tile layer if necessary
     if (layerGroupId) {
       if (!this.dataLayer) {
-        this.dataLayer = L.tileLayer(`${baseURL}/${layerGroupId}/{z}/{x}/{y}.png`);
+        this.dataLayer = L.tileLayer(`${baseURL}/${layerGroupId}/all/{z}/{x}/{y}.png`);
         this.dataLayer.addTo(map);
       } else {
         const needToUpdate = Boolean(
@@ -230,7 +231,7 @@ export default class MapVisualisation extends Component {
           this.storedSpec = cloneDeep(this.props.visualisation.spec.layers[0]);
 
           map.removeLayer(this.dataLayer);
-          this.dataLayer = L.tileLayer(`${baseURL}/${layerGroupId}/{z}/{x}/{y}.png`);
+          this.dataLayer = L.tileLayer(`${baseURL}/${layerGroupId}/all/{z}/{x}/{y}.png`);
           this.dataLayer.addTo(map);
         }
       }
@@ -247,50 +248,53 @@ export default class MapVisualisation extends Component {
     const canUpdate = windshaftAvailable || needToRemovePopup;
 
     if ((needToAddOrUpdate || needToRemovePopup) && canUpdate) {
-      if (haveUtfGrid) {
-        // Remove the existing grid
-        this.map.closePopup();
-        map.removeLayer(this.utfGrid);
-        this.utfGrid = null;
-      }
 
-      if (havePopupData) {
-        this.popup = cloneDeep(popup);
-        // eslint-disable-next-line new-cap
-        this.utfGrid = new L.utfGrid(`${baseURL}/${layerGroupId}/0/{z}/{x}/{y}.grid.json?callback={cb}`, {
-          resolution: 4,
-        });
+      layers.forEach((layer, index) => {
+        if (this[`utfgrid${index}`]) {
+          // Remove the existing grid
+          this.map.closePopup();
+          map.removeLayer(this[`utfgrid${index}`]);
+          this[`utfgrid${index}`] = null;
+        }
 
-        this.utfGrid.on('click', (e) => {
-          if (e.data) {
-            this.popupElement = L.popup()
-            .setLatLng(e.latlng)
-            .openOn(map);
+        if (havePopupData) {
+          this.popup = cloneDeep(popup);
+          // eslint-disable-next-line new-cap
+          this[`utfGrid${index}`] = new L.utfGrid(`${baseURL}/${layerGroupId}/${index}/{z}/{x}/{y}.grid.json?callback={cb}`, {
+            resolution: 4,
+          });
 
-            // Adjust size of popup and map position to make popup contents visible
-            const adjustLayoutForPopup = () => {
-              this.popupElement.update();
-              if (this.popupElement._map && this.popupElement._map._panAnim) {
-                this.popupElement._map._panAnim = undefined;
-              }
-              this.popupElement._adjustPan();
-            };
+          this[`utfGrid${index}`].on('click', (e) => {
+            if (e.data) {
+              this.popupElement = L.popup()
+              .setLatLng(e.latlng)
+              .openOn(map);
 
-            // Although we use leaflet to create the popup, we can still render the contents
-            // with react-dom
-            render(
-              <PopupContent
-                data={e.data}
-                layerDataset={layerDataset}
-                onImageLoad={adjustLayoutForPopup}
-              />,
-              this.popupElement._contentNode,
-              adjustLayoutForPopup
-            );
-          }
-        });
-        map.addLayer(this.utfGrid);
-      }
+              // Adjust size of popup and map position to make popup contents visible
+              const adjustLayoutForPopup = () => {
+                this.popupElement.update();
+                if (this.popupElement._map && this.popupElement._map._panAnim) {
+                  this.popupElement._map._panAnim = undefined;
+                }
+                this.popupElement._adjustPan();
+              };
+
+              // Although we use leaflet to create the popup, we can still render the contents
+              // with react-dom
+              render(
+                <PopupContent
+                  data={e.data}
+                  layerDataset={layerDataset}
+                  onImageLoad={adjustLayoutForPopup}
+                />,
+                this.popupElement._contentNode,
+                adjustLayoutForPopup
+              );
+            }
+          });
+          map.addLayer(this[`utfGrid${index}`]);
+        }
+      })
     }
   }
 

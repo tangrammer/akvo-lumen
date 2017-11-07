@@ -71,13 +71,13 @@
 
     :else [dataset-id layer]))
 
-(defn do-create [tenant-conn windshaft-url dataset-id layer]
+(defn do-create [tenant-conn windshaft-url dataset-id layer layers dataset-by-id]
   (let [{:keys [table-name columns]} (dataset-by-id tenant-conn {:id dataset-id})
         where-clause (filter/sql-str columns (get layer "filters"))
         metadata (map-metadata/build tenant-conn table-name layer where-clause)
         headers (headers tenant-conn)
         url (format "%s/layergroup" windshaft-url)
-        map-config (map-config/build table-name layer where-clause metadata columns)
+        map-config (map-config/build table-name layer where-clause metadata columns layers tenant-conn dataset-by-id)
         layer-group-id (-> (client/post url {:body (json/encode map-config)
                                              :headers headers
                                              :content-type :json})
@@ -86,9 +86,9 @@
              "metadata" metadata})))
 
 (defn create
-  [tenant-conn windshaft-url dataset-id layer]
+  [tenant-conn windshaft-url dataset-id layer layers]
   (try
     (let [[dataset-id layer] (conform-create-args dataset-id layer)]
-      (do-create tenant-conn windshaft-url dataset-id layer))
+      (do-create tenant-conn windshaft-url dataset-id layer layers dataset-by-id))
     (catch Exception e
       (lib/bad-request (ex-data e)))))

@@ -17,8 +17,9 @@
 
       (context "/maps" _
         (POST "/" {{:strs [datasetId spec]} :body}
-          (let [layer (get-in spec ["layers" 0])]
-            (maps/create tenant-conn (:windshaft-url config) datasetId layer))))
+          (let [layer (get-in spec ["layers" 0])
+                layers (get-in spec ["layers"])]
+            (maps/create tenant-conn (:windshaft-url config) datasetId layer layers))))
 
       (context "/:id" [id]
 
