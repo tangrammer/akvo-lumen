@@ -54,34 +54,36 @@ const getBaseLayerAttributes = ((baseLayer) => {
   return attributes;
 });
 
-const Legend = ({ pointColorMapping, position = 'bottom', title = '' }) => (
+const Legend = ({ pointColorMappings, position = 'bottom', titles = [] }) => (
   <div className={`Legend ${position}`}>
-    <h4>{title}</h4>
-    <div className="listContainer">
-      <ul>
-        {pointColorMapping.map(item =>
-          <li
-            key={item.value}
-          >
-            <div
-              className="colorMarker"
-              style={{
-                backgroundColor: item.color,
-              }}
-            />
-            <p className="label">
-              {chart.replaceLabelIfValueEmpty(item.value)}
-            </p>
-          </li>
-          )}
-      </ul>
-    </div>
+    {pointColorMappings.map((pointColorMapping, idx) =>
+      <div className="listContainer">
+        <h4>{titles[idx]}</h4>
+        <ul className="pointColorMapping">
+          {pointColorMapping.map(item =>
+            <li
+              key={item.value}
+            >
+              <div
+                className="colorMarker"
+                style={{
+                  backgroundColor: item.color,
+                }}
+              />
+              <p className="label">
+                {chart.replaceLabelIfValueEmpty(item.value)}
+              </p>
+            </li>
+            )}
+        </ul>
+      </div>
+    )}
   </div>
   );
 
 Legend.propTypes = {
-  pointColorMapping: PropTypes.array.isRequired,
-  title: PropTypes.string,
+  pointColorMappings: PropTypes.array.isRequired,
+  title: PropTypes.array,
   position: PropTypes.string,
 };
 
@@ -129,6 +131,7 @@ export default class MapVisualisation extends Component {
   constructor() {
     super();
     this.renderLeafletMap = this.renderLeafletMap.bind(this);
+    this.renderLeafletLayer = this.renderLeafletLayer.bind(this);
   }
   componentDidMount() {
     this.renderLeafletMap(this.props);
@@ -136,12 +139,78 @@ export default class MapVisualisation extends Component {
   componentWillReceiveProps(nextProps) {
     this.renderLeafletMap(nextProps);
   }
+  renderLeafletLayer(layer, id, layerGroupId, datasets, baseURL, map) {
+
+    if (!this[`storedSpec${id}`]) {
+      // Store a copy of the layer spec to compare to future changes so we know when to re-render
+      this[`storedSpec${id}`] = cloneDeep(layer);
+    }
+
+    const newSpec = layer || {};
+    const oldSpec = this[`storedSpec${id}`] || {};
+    const filtersChanged = !isEqual(newSpec.filters, oldSpec.filters);
+    const popup = newSpec.popup;
+    const havePopupData = popup && popup.length > 0;
+    const haveUtfGrid = Boolean(this[`utfGrid${id}`]);
+    const needToRemovePopup = this[`utfGrid${id}`] && !havePopupData;
+    const popupChanged = (!this[`popup${id}`] || !isEqual(popup, this[`popup${id}`]));
+    const needToAddOrUpdate =
+      havePopupData && (popupChanged || filtersChanged);
+    const windshaftAvailable = layerGroupId;
+    const canUpdate = windshaftAvailable || needToRemovePopup;
+
+    if ((needToAddOrUpdate || needToRemovePopup) && canUpdate) {
+
+        if (this[`utfgrid${id}`]) {
+          // Remove the existing grid
+          this.map.closePopup();
+          map.removeLayer(this[`utfgrid${id}`]);
+          this[`utfgrid${id}`] = null;
+        }
+
+        if (havePopupData) {
+          this[`popup${id}`] = cloneDeep(popup);
+          // eslint-disable-next-line new-cap
+          this[`utfGrid${id}`] = new L.utfGrid(`${baseURL}/${layerGroupId}/${id}/{z}/{x}/{y}.grid.json?callback={cb}`, {
+            resolution: 4,
+          });
+
+          this[`utfGrid${id}`].on('click', (e) => {
+            if (e.data) {
+              this.popupElement = L.popup()
+              .setLatLng(e.latlng)
+              .openOn(map);
+
+              // Adjust size of popup and map position to make popup contents visible
+              const adjustLayoutForPopup = () => {
+                this.popupElement.update();
+                if (this.popupElement._map && this.popupElement._map._panAnim) {
+                  this.popupElement._map._panAnim = undefined;
+                }
+                this.popupElement._adjustPan();
+              };
+
+              // Although we use leaflet to create the popup, we can still render the contents
+              // with react-dom
+              render(
+                <PopupContent
+                  data={e.data}
+                  layerDataset={datasets[layer.datasetId]}
+                  onImageLoad={adjustLayoutForPopup}
+                />,
+                this.popupElement._contentNode,
+                adjustLayoutForPopup
+              );
+            }
+          });
+          map.addLayer(this[`utfGrid${id}`]);
+        }
+    }
+  }
   renderLeafletMap(nextProps) {
     const { visualisation, datasets, width, height } = nextProps;
     const { tileUrl, tileAttribution } = getBaseLayerAttributes(visualisation.spec.baseLayer);
     const layers = visualisation.spec.layers;
-    const layer = visualisation.spec.layers[0];
-    const layerDataset = layer ? datasets[layer.datasetId] : null;
 
     // Windshaft map
     // const tenantDB = visualisation.tenantDB;
@@ -154,11 +223,7 @@ export default class MapVisualisation extends Component {
 
     let map;
 
-    if (!this.storedSpec) {
-      // Store a copy of the layer spec to compare to future changes so we know when to re-render
-      this.storedSpec = cloneDeep(this.props.visualisation.spec.layers[0]);
-    }
-
+    /* General map stuff - not layer specific */
     if (!this.storedBaseLayer) {
       // Do the same thing for the baselayer
       this.storedBaseLayer = cloneDeep(this.props.visualisation.spec.baseLayer);
@@ -198,6 +263,7 @@ export default class MapVisualisation extends Component {
       }
     }
 
+
     // Update the bounding box if necessary
     if (visualisation.metadata && visualisation.metadata.boundingBox) {
       const boundingBoxChanged =
@@ -208,9 +274,13 @@ export default class MapVisualisation extends Component {
       }
     }
 
-    const newSpec = nextProps.visualisation.spec.layers[0] || {};
+    if (!this.storedSpec) {
+      // Store a copy of the layer spec to compare to future changes so we know when to re-render
+      this.storedSpec = cloneDeep(visualisation.spec);
+    }
+
+    const newSpec = nextProps.visualisation.spec || {};
     const oldSpec = this.storedSpec || {};
-    const filtersChanged = !isEqual(newSpec.filters, oldSpec.filters);
 
     // Add or update the windshaft tile layer if necessary
     if (layerGroupId) {
@@ -219,16 +289,10 @@ export default class MapVisualisation extends Component {
         this.dataLayer.addTo(map);
       } else {
         const needToUpdate = Boolean(
-          newSpec.datasetId !== oldSpec.datasetId ||
-          filtersChanged ||
-          newSpec.geom !== newSpec.geom ||
-          newSpec.pointColorColumn !== oldSpec.pointColorColumn ||
-          !isEqual(newSpec.pointColorMapping, oldSpec.pointColorMapping) ||
-          newSpec.pointSize !== oldSpec.pointSize ||
-          newSpec.visible !== oldSpec.visible
+          !isEqual(newSpec.layers, oldSpec.layers)
         );
         if (needToUpdate) {
-          this.storedSpec = cloneDeep(this.props.visualisation.spec.layers[0]);
+          this.storedSpec = cloneDeep(this.props.visualisation.spec);
 
           map.removeLayer(this.dataLayer);
           this.dataLayer = L.tileLayer(`${baseURL}/${layerGroupId}/all/{z}/{x}/{y}.png`);
@@ -237,65 +301,11 @@ export default class MapVisualisation extends Component {
       }
     }
 
-    const popup = newSpec.popup;
-    const havePopupData = popup && popup.length > 0;
-    const haveUtfGrid = Boolean(this.utfGrid);
-    const needToRemovePopup = this.utfGrid && !havePopupData;
-    const popupChanged = (!this.popup || !isEqual(popup, this.popup));
-    const needToAddOrUpdate =
-      havePopupData && (popupChanged || filtersChanged);
-    const windshaftAvailable = layerGroupId;
-    const canUpdate = windshaftAvailable || needToRemovePopup;
+    /* end */
 
-    if ((needToAddOrUpdate || needToRemovePopup) && canUpdate) {
-
-      layers.forEach((layer, index) => {
-        if (this[`utfgrid${index}`]) {
-          // Remove the existing grid
-          this.map.closePopup();
-          map.removeLayer(this[`utfgrid${index}`]);
-          this[`utfgrid${index}`] = null;
-        }
-
-        if (havePopupData) {
-          this.popup = cloneDeep(popup);
-          // eslint-disable-next-line new-cap
-          this[`utfGrid${index}`] = new L.utfGrid(`${baseURL}/${layerGroupId}/${index}/{z}/{x}/{y}.grid.json?callback={cb}`, {
-            resolution: 4,
-          });
-
-          this[`utfGrid${index}`].on('click', (e) => {
-            if (e.data) {
-              this.popupElement = L.popup()
-              .setLatLng(e.latlng)
-              .openOn(map);
-
-              // Adjust size of popup and map position to make popup contents visible
-              const adjustLayoutForPopup = () => {
-                this.popupElement.update();
-                if (this.popupElement._map && this.popupElement._map._panAnim) {
-                  this.popupElement._map._panAnim = undefined;
-                }
-                this.popupElement._adjustPan();
-              };
-
-              // Although we use leaflet to create the popup, we can still render the contents
-              // with react-dom
-              render(
-                <PopupContent
-                  data={e.data}
-                  layerDataset={layerDataset}
-                  onImageLoad={adjustLayoutForPopup}
-                />,
-                this.popupElement._contentNode,
-                adjustLayoutForPopup
-              );
-            }
-          });
-          map.addLayer(this[`utfGrid${index}`]);
-        }
-      })
-    }
+    visualisation.spec.layers.forEach((layer, idx) => {
+      this.renderLeafletLayer(layer, idx, layerGroupId, datasets, baseURL, map)
+    })
   }
 
   render() {
@@ -339,8 +349,8 @@ export default class MapVisualisation extends Component {
           {visualisation.metadata && visualisation.metadata.pointColorMapping &&
             <Legend
               position={visualisation.spec.layers[0].legend.position}
-              title={visualisation.spec.layers[0].legend.title}
-              pointColorMapping={visualisation.metadata.pointColorMapping}
+              titles={visualisation.spec.layers.map(layer => layer.legend.title)}
+              pointColorMappings={visualisation.spec.layers.map(layer => layer.pointColorMapping)}
             />
           }
           {

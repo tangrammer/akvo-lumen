@@ -25,7 +25,7 @@ const specIsValidForApi = (spec, vType) => {
       if (spec.layers.length === 0) {
         return false;
       }
-      if (!spec.layers[0].geom && (!spec.layers[0].latitude || !spec.layers[0].longitude)) {
+      if (spec.layers.some(layer => Boolean(!layer.geom && (!layer.latitude || !layer.longitude)))) {
         return false;
       }
       break;
@@ -110,9 +110,16 @@ export default class VisualisationEditor extends Component {
       case 'map':
         specValid = specIsValidForApi(visualisation.spec, vType);
         needNewAggregation =
-          getNeedNewAggregation(
-            checkUndefined(visualisation, 'spec', 'layers', 0),
-            checkUndefined(this.lastVisualisationRequested, 'spec', 'layers', 0), 'map'
+          Boolean(
+            visualisation.spec.layers &&
+            visualisation.spec.layers.length &&
+            visualisation.spec.layers.some((layer, idx) =>
+              getNeedNewAggregation(
+                layer,
+                checkUndefined(this.lastVisualisationRequested, 'spec', 'layers', idx),
+                'map'
+              )
+            )
           );
 
         if (!this.state.visualisation || !this.state.visualisation.datasetId) {
@@ -126,7 +133,12 @@ export default class VisualisationEditor extends Component {
         } else {
           // Update the visualisation in the editor, but don't make a request to the backend
           this.setState({ visualisation:
-            Object.assign({}, visualisation, { metadata: this.state.visualisation.metadata }),
+            Object.assign({}, visualisation,
+              {
+                metadata: this.state.visualisation.metadata,
+                layerMetadata: this.state.visualisation.layerMetadata,
+              }
+            ),
           });
         }
 
@@ -178,26 +190,29 @@ export default class VisualisationEditor extends Component {
                 awaitingResponse: false,
                 failedToLoad: true,
                 metadata: Object.assign({}, checkUndefined(this.state.visualisation, 'metadata')),
+                layerMetadata: Object.assign({}, checkUndefined(this.state.visualisation, 'layerMetadata')),
               }
             ),
         }
       );
     };
 
-    const updateMapVisualisation = ({ layerGroupId, metadata }) => {
-      const needPointColorMapping = visualisation.spec.layers[0].pointColorColumn;
-      const havePointColorMapping = checkUndefined(metadata, 'pointColorMapping', 'length') > 0;
-      const parentHasPointColorMapping = visualisation.spec.layers[0].pointColorMapping.length > 0;
+    const updateMapVisualisation = ({ layerGroupId, metadata, layerMetadata }) => {
+      const needPointColorMapping = visualisation.spec.layers.some(layer => layer.pointColorColumn);
+      const havePointColorMapping = layerMetadata && layerMetadata.length && layerMetadata.some(layer => checkUndefined(layer, 'pointColorMapping', 'length') > 0);
 
-      if (needPointColorMapping && havePointColorMapping && !parentHasPointColorMapping) {
-        const clonedLayer = Object.assign(
-          {},
-          this.props.visualisation.spec.layers[0],
-          { pointColorMapping: metadata.pointColorMapping });
+      if (needPointColorMapping && havePointColorMapping) {
 
-        const layers = this.props.visualisation.spec.layers.slice(0);
-        layers[0] = clonedLayer;
-        this.props.onChangeVisualisationSpec({ layers });
+        const layers = this.props.visualisation.spec.layers;
+        const clonedLayers = layers.map((layer, idx) => {
+          if (checkUndefined(layerMetadata, idx, 'pointColorMapping', 'length') > 0) {
+            return Object.assign({}, layer, { pointColorMapping: layerMetadata[idx].pointColorMapping });
+          } else {
+            return layer;
+          }
+        });
+
+        this.props.onChangeVisualisationSpec({ layers: clonedLayers });
       }
 
       this.setState({
@@ -211,6 +226,7 @@ export default class VisualisationEditor extends Component {
           {
             layerGroupId,
             metadata,
+            layerMetadata,
           },
           {
             spec: Object.assign(
@@ -218,11 +234,11 @@ export default class VisualisationEditor extends Component {
               visualisation.spec,
               {
                 layers: visualisation.spec.layers.map((item, idx) => {
-                  if (idx === 0 && metadata && metadata.pointColorMapping) {
+                  if (layerMetadata && layerMetadata[idx] && layerMetadata[idx].pointColorMapping) {
                     return Object.assign(
                       {},
                       item,
-                      { pointColorMapping: metadata.pointColorMapping }
+                      { pointColorMapping: layerMetadata[idx].pointColorMapping }
                     );
                   }
                   return item;
@@ -255,6 +271,7 @@ export default class VisualisationEditor extends Component {
                 {
                   awaitingResponse: true,
                   metadata: Object.assign({}, checkUndefined(this.state.visualisation, 'metadata')),
+                  layerMetadata: Object.assign({}, checkUndefined(this.state.visualisation, 'layerMetadata')),
                 }
               ),
           }

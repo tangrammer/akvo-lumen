@@ -1,5 +1,9 @@
 (ns akvo.lumen.lib.visualisation.map-config
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [akvo.lumen.lib.aggregation.filter :as filter]
+            [hugsql.core :as hugsql]))
+
+(hugsql/def-db-fns "akvo/lumen/lib/dataset.sql")
 
 (defn layer-point-color [layer-index]
     ({0 "#2ca409"
@@ -47,7 +51,7 @@
       (str/replace #"\n" " ")
       (str/replace #" +" " ")))
 
-(defn sql [columns table-name2 geom-column popup-columns point-color-column where-clause current-layer tenant-conn dataset-by-id]
+(defn sql [columns table-name2 geom-column popup-columns point-color-column where-clause current-layer tenant-conn]
   (let [
     {:keys [table-name columns]} (dataset-by-id tenant-conn {:id (get current-layer "datasetId")})
     date-column-set (reduce (fn [m c]
@@ -71,25 +75,24 @@
     (let [{:strs [latitude longitude]} layer-spec]
       (format "ST_SetSRID(ST_MakePoint(%s, %s), 4326) AS latlong" longitude latitude))))
 
-(defn build [table-name layer where-clause metadata columns layers conn dataset-by-id]
-  (let [geom-column (get-geom-column layer)
-        popup-columns (mapv #(get % "column")
-                            (get layer "popup"))
-        point-color-column (get layer "pointColorColumn")]
+(defn build [table-name layer metadata-array columns layers conn]
+  (let [foo "bar"]
     {"version" "1.6.0"
      "layers" (map-indexed (fn [idx, current-layer]
                 (let [geom-column (get-geom-column current-layer)
-                     popup-columns (mapv #(get % "column")
+                      {:keys [columns]} (dataset-by-id conn {:id (get current-layer "datasetId")})
+                      where-clause (filter/sql-str columns (get current-layer "filters"))
+                      popup-columns (mapv #(get % "column")
                                          (get current-layer "popup"))
                      point-color-column (get current-layer "pointColorColumn")]
                 {"type" "mapnik"
                              "options" {"cartocss" (trim-css (cartocss (get current-layer "pointSize")
                                                                        (get current-layer "pointColorColumn")
-                                                                       (get metadata "pointColorMapping")
+                                                                       (get (nth metadata-array idx) "pointColorMapping")
                                                                        idx))
                                         "cartocss_version" "2.0.0"
                                         "geom_column" (or (get current-layer "geom") "latlong")
                                         "interactivity" popup-columns
                                         "sql" (sql columns table-name geom-column popup-columns point-color-column
-                                                   where-clause current-layer conn dataset-by-id)
+                                                   where-clause current-layer conn)
                                         "srid" "4326"}})) layers)}))

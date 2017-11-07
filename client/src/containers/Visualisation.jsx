@@ -49,7 +49,6 @@ class Visualisation extends Component {
     const { params, library, dispatch } = this.props;
     const visualisationId = params.visualisationId;
     const isEditingExistingVisualisation = visualisationId != null;
-
     // If this is route is accessed via a permalink we'll have to fetch the library,
     // where all the datasets are.
     if (isEmpty(library.datasets)) {
@@ -67,6 +66,17 @@ class Visualisation extends Component {
               library.datasets[datasetId].get('rows') == null) {
             dispatch(fetchDataset(datasetId));
           }
+        }
+        if (visualisation.visualisationType === 'map') {
+          visualisation.spec.layers.forEach(layer => {
+            if (layer.datasetId) {
+              if (library.datasets[layer.datasetId] == null ||
+                library.datasets[layer.datasetId].get('columns') == null) {
+
+                dispatch(fetchDataset(layer.datasetId));
+              }
+            }
+          });
         }
         this.setState({
           visualisation,

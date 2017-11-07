@@ -41,6 +41,13 @@ export function fetchVisualisation(id) {
         if (datasetId) {
           dispatch(fetchDataset(datasetId));
         }
+        if (visualisation.visualisationType === 'map') {
+          visualisation.spec.layers.forEach(layer => {
+            if (layer.datasetId) {
+              dispatch(fetchDataset(layer.datasetId));
+            }
+          });
+        }
         dispatch(fetchVisualisationSuccess(visualisation));
       })
       .catch(err => dispatch(fetchVisualisationFailure(err)));

@@ -59,9 +59,9 @@
 
            :else false)))
 
-(defn conform-create-args [dataset-id layer]
+(defn conform-create-args [layer]
   (cond
-    (not (engine/valid-dataset-id? dataset-id))
+    (not (engine/valid-dataset-id? (get layer "datasetId")))
     (throw (ex-info "No valid datasetID"
                     {"reason" "No valid datasetID"}))
 
@@ -69,26 +69,36 @@
     (throw (ex-info "Location spec not valid"
                     {"reason" "Location spec not valid"}))
 
-    :else [dataset-id layer]))
+    :else [(get layer "datasetId") layer]))
 
-(defn do-create [tenant-conn windshaft-url dataset-id layer layers dataset-by-id]
+(defn do-create [tenant-conn windshaft-url dataset-id layer layers]
   (let [{:keys [table-name columns]} (dataset-by-id tenant-conn {:id dataset-id})
-        where-clause (filter/sql-str columns (get layer "filters"))
-        metadata (map-metadata/build tenant-conn table-name layer where-clause)
-        headers (headers tenant-conn)
-        url (format "%s/layergroup" windshaft-url)
-        map-config (map-config/build table-name layer where-clause metadata columns layers tenant-conn dataset-by-id)
+      ;  where-clause (filter/sql-str columns (get layer "filters")) ; layer-specific
+        where-clause "true"
+        metadata (map-metadata/build tenant-conn table-name layer where-clause) ; general
+        metadata-array (map (fn [current-layer]
+          (let [
+            current-dataset-id (get current-layer "datasetId")
+            {:keys [table-name columns]} (dataset-by-id tenant-conn {:id current-dataset-id})
+            current-where-clause (filter/sql-str columns (get current-layer "filters"))]
+          (map-metadata/build tenant-conn table-name current-layer current-where-clause))) layers)
+        headers (headers tenant-conn) ; general
+        url (format "%s/layergroup" windshaft-url) ; general
+        map-config (map-config/build table-name layer metadata-array columns layers tenant-conn)
         layer-group-id (-> (client/post url {:body (json/encode map-config)
                                              :headers headers
                                              :content-type :json})
-                           :body json/decode (get "layergroupid"))]
+                           :body json/decode (get "layergroupid")) ; general
+        ]
     (lib/ok {"layerGroupId" layer-group-id
-             "metadata" metadata})))
+             "metadata" metadata
+             "layerMetadata" metadata-array})))
 
 (defn create
   [tenant-conn windshaft-url dataset-id layer layers]
   (try
-    (let [[dataset-id layer] (conform-create-args dataset-id layer)]
-      (do-create tenant-conn windshaft-url dataset-id layer layers dataset-by-id))
+    (let [[dataset-id layer] (conform-create-args layer)]
+      (do-create tenant-conn windshaft-url dataset-id layer layers))
     (catch Exception e
+      (println e)
       (lib/bad-request (ex-data e)))))
