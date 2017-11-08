@@ -32,7 +32,16 @@
                 value)
               (pr-str color)))))
 
-(defn cartocss [point-size point-color-column point-color-mapping layer-index]
+(defn shape-cartocss [layer-index]
+  (format "#s {
+              polygon-opacity: 0.8;
+              polygon-fill: %s;
+              line-width: 0.5;
+              line-color: rgba(0,0,0,0.3);
+           }"
+          (layer-point-color layer-index)))
+
+(defn point-cartocss [point-size point-color-column point-color-mapping layer-index]
   (format "#s {
               marker-allow-overlap: true;
               marker-fill-opacity: 0.8;
@@ -86,10 +95,12 @@
                                          (get current-layer "popup"))
                      point-color-column (get current-layer "pointColorColumn")]
                 {"type" "mapnik"
-                             "options" {"cartocss" (trim-css (cartocss (get current-layer "pointSize")
-                                                                       (get current-layer "pointColorColumn")
-                                                                       (get (nth metadata-array idx) "pointColorMapping")
-                                                                       idx))
+                             "options" {"cartocss" (if(= "geoshape" (get current-layer "layerType"))
+                                                      (trim-css (shape-cartocss idx))
+                                                      (trim-css (point-cartocss (get current-layer "pointSize")
+                                                      (get current-layer "pointColorColumn")
+                                                      (get (nth metadata-array idx) "pointColorMapping")
+                                                      idx)))
                                         "cartocss_version" "2.0.0"
                                         "geom_column" (or (get current-layer "geom") "latlong")
                                         "interactivity" popup-columns

@@ -133,11 +133,12 @@ export default class LayerConfigMenu extends Component {
                 labelText="Geopoint column"
                 choice={layer.geom != null ? layer.geom.toString() : null}
                 name="geomInput"
-                options={filterColumns(columnOptions, 'geopoint')}
+                options={filterColumns(columnOptions, ['geopoint', 'geoshape'])}
                 onChange={value => onChangeMapLayer(layerIndex, {
                   geom: value,
                   latitude: null,
                   longitude: null,
+                  layerType: columnOptions.find(item => item.value === value).type,
                 })}
               />
             </div>
