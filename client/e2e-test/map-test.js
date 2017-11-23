@@ -25,7 +25,7 @@ const datasetName = Date.now().toString();
 
 (async () => {
   const browser = await puppeteer.launch({
-	headless: false,
+    // headless: false,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -37,7 +37,7 @@ const datasetName = Date.now().toString();
     // Login
     console.log('\nSTARTING LUMEN TEST WITH PUPPETEER\n');
     await page.setViewport({ width: 1024, height: 768 });
-    console.log('Accessing to http://t1.lumen.local:3030...');
+    console.log('Accessing to t1.lumen.local:3030...');
     await page.goto('http://t1.lumen.local:3030/');
     await page.waitForSelector('#username', { timeout: 10000 });
     console.log('Typing username...');
@@ -48,7 +48,6 @@ const datasetName = Date.now().toString();
     await page.click('#kc-login');
     await page.waitForSelector('button[data-test-id="dataset"]', { timeout: 10000 });
     console.log('Login was successful.\n');
-    await page.evaluate(`window.__datasetName = "${datasetName}"`);
 
     // Dataset adding
     // Click Dataset+ option
@@ -71,10 +70,11 @@ const datasetName = Date.now().toString();
     console.log('Saving dataset...');
     await page.click('button[data-test-id="next"]');
     console.log(`Dataset ${datasetName} was successfully created.\n`);
-    await page.waitForSelector(`[data-test-name="${datasetName}"]`);
+    await page.waitForSelector(`[data-test-name="${datasetName}"]`, { timeout: 10000 });
 
     // Search of the ID
     console.log('Extracting dataset ID...');
+    await page.evaluate(`window.__datasetName = "${datasetName}"`);
     const id = await page.evaluate(() => {
       const found = document.querySelector(`[data-test-name="${__datasetName}"]`);
       return Promise.resolve(found.getAttribute('data-test-id'));
@@ -89,15 +89,15 @@ const datasetName = Date.now().toString();
       console.log('Pending...');
     } while (pending);
     clearTimeout(timeOut);
-    
+
     // Create geopoints
     await page.click(`[data-test-name="${datasetName}"]`);
-    await page.waitForSelector('[data-test-id="transform"]');
+    await page.waitForSelector('[data-test-id="transform"]', { timeout: 10000 });
     await page.click('[data-test-id="transform"]');
     console.log('Creating column of geopoints...');
     await page.click('li:nth-of-type(6)');
     console.log('Selecting latitudes...');
-    await page.waitForSelector('label[for="columnNameLat"]+div');
+    await page.waitForSelector('label[for="columnNameLat"]+div', { timeout: 10000 });
     await page.click('label[for="columnNameLat"]+div');
     const latitudeId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -107,7 +107,7 @@ const datasetName = Date.now().toString();
     });
     await page.click(`#${latitudeId}`);
     console.log('Selecting longitudes...');
-    await page.waitForSelector('label[for="columnNameLong"]+div');
+    await page.waitForSelector('label[for="columnNameLong"]+div', { timeout: 10000 });
     await page.click('label[for="columnNameLong"]+div');
     const longitudeId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -121,22 +121,19 @@ const datasetName = Date.now().toString();
     await page.click('[data-test-id="generate"]');
     await page.goto('http://t1.lumen.local:3030/library');
     await page.waitForSelector('button[data-test-id="visualisation"]', { timeout: 10000 });
-    
-    /********************************************************************
+
     // Map
     console.log('Accessing to visualisation creation...');
     await page.click('button[data-test-id="visualisation"]');
     console.log('Selecting map option...');
     await page.waitForSelector('li[data-test-id="button-map"]', { timeout: 10000 });
     await page.click('li[data-test-id="button-map"]');
-    //LOOK TEST IDS
-    await page.click('[class="addLayer clickable noSelect"]');
-    await page.click('[class="clickable title"]');
+    await page.click('[data-test-id="add-layer"]');
+    await page.click('[data-test-id="layer"]');
     console.log('Selecting dataset...');
-    await page.waitForSelector('.Select-placeholder', { timeout: 10000 });
-    await page.click('.Select-placeholder');
-    //await page.waitForSelector('[data-test-id="select-menu"]', { timeout: 10000 });
-    //await page.click('[data-test-id="select-menu"]');
+    await page.waitForSelector('[data-test-id="dataset-menu"]+div', { timeout: 10000 });
+    await page.click('[data-test-id="dataset-menu"]+div');
+    await page.evaluate(`window.__datasetName = "${datasetName}"`);
     const optionId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
       const options = Array.from(elements);
@@ -144,25 +141,32 @@ const datasetName = Date.now().toString();
       return Promise.resolve(found.getAttribute('id'));
     });
     await page.click(`#${optionId}`);
-    await page.waitForSelector('.Select-placeholder', { timeout: 10000 });
-    await page.click('.Select-placeholder');
-    //await page.waitForSelector('label[data-test-id="categoryColumnInput"]+div', { timeout: 10000 });
-    //await page.click('label[data-test-id="categoryColumnInput"]+div');
+    await page.waitForSelector('[data-test-id="geomInput"]+div', { timeout: 10000 });
+    await page.click('[data-test-id="geomInput"]+div');
     console.log('Selecting columns...');
     const columnId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
       const options = Array.from(elements);
-      const found = options.find(e => e.textContent === 'Latitude');
+      const found = options.find(e => e.textContent === 'Geopoint (geopoint)');
       return Promise.resolve(found.getAttribute('id'));
     });
     await page.click(`#${columnId}`);
+    /* await page.click('[data-test-id="xGroupColumnMenu"]+div');
+    const codingId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent=== 'Country (text)');
+      return Promise.resolve(found.getAttribute('id'));
+    });
+    // console.log(codingId);
+    await page.click(`#${codingId}`);*/
     await page.click('div[data-test-id="entity-title"]');
     console.log('Typing map name...');
-    await page.type('input[data-test-id="entity-title"]', `Visualisation of ${datasetName}`);
+    await page.type('input[data-test-id="entity-title"]', `Map of ${datasetName}`);
     console.log('Saving map...');
-    await page.click('button[data-test-id="save-changes"]');
+    await page.click('[data-test-id="save-button"]');
     await page.goto('http://t1.lumen.local:3030/library');
-    await page.waitForSelector('button[data-test-id="dashboard"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="dashboard"]', { timeout: 10000 });
     console.log(`Map ${datasetName} was successfully created.\n`);
 
     // Dashboard
@@ -180,7 +184,6 @@ const datasetName = Date.now().toString();
     await page.click('i[data-test-id="fa-arrow"]');
     console.log(`Dashboard ${datasetName} was successfully created.\n`);
     console.log('THE TEST WAS SUCCESSFUL');
-    *****************************************************/
   } catch (err) {
     console.log(`THE TEST FAILED\n${err}`);
     process.exit(1);
