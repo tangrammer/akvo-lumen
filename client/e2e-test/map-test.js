@@ -25,6 +25,7 @@ const datasetName = Date.now().toString();
 
 (async () => {
   const browser = await puppeteer.launch({
+	headless: false,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -60,7 +61,7 @@ const datasetName = Date.now().toString();
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector('#linkFileInput', { timeout: 10000 });
     // Insert link
-    await page.type('#linkFileInput', 'https://github.com/lawlesst/vivo-sample-data/raw/master/data/csv/people.csv');
+    await page.type('#linkFileInput', 'https://raw.githubusercontent.com/albertyw/avenews/master/old/data/average-latitude-longitude-countries.csv');
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector('input[data-test-id="dataset-name"]', { timeout: 10000 });
     // Insert name
@@ -88,15 +89,54 @@ const datasetName = Date.now().toString();
       console.log('Pending...');
     } while (pending);
     clearTimeout(timeOut);
-    // Pivot table
+    
+    // Create geopoints
+    await page.click(`[data-test-name="${datasetName}"]`);
+    await page.waitForSelector('[data-test-id="transform"]');
+    await page.click('[data-test-id="transform"]');
+    console.log('Creating column of geopoints...');
+    await page.click('li:nth-of-type(6)');
+    console.log('Selecting latitudes...');
+    await page.waitForSelector('label[for="columnNameLat"]+div');
+    await page.click('label[for="columnNameLat"]+div');
+    const latitudeId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === 'Latitude');
+      return Promise.resolve(found.getAttribute('id'));
+    });
+    await page.click(`#${latitudeId}`);
+    console.log('Selecting longitudes...');
+    await page.waitForSelector('label[for="columnNameLong"]+div');
+    await page.click('label[for="columnNameLong"]+div');
+    const longitudeId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === 'Longitude');
+      return Promise.resolve(found.getAttribute('id'));
+    });
+    await page.click(`#${longitudeId}`);
+    console.log('Typing column name...');
+    await page.type('[data-test-id="columnTitle"]', 'Geopoint');
+    await page.click('[data-test-id="generate"]');
+    await page.goto('http://t1.lumen.local:3030/library');
+    await page.waitForSelector('button[data-test-id="visualisation"]', { timeout: 10000 });
+    
+    /********************************************************************
+    // Map
     console.log('Accessing to visualisation creation...');
     await page.click('button[data-test-id="visualisation"]');
-    console.log('Selecting pivot table option...');
-    await page.waitForSelector('li[data-test-id="button-pivot-table"]', { timeout: 10000 });
-    await page.click('li[data-test-id="button-pivot-table"]');
+    console.log('Selecting map option...');
+    await page.waitForSelector('li[data-test-id="button-map"]', { timeout: 10000 });
+    await page.click('li[data-test-id="button-map"]');
+    //LOOK TEST IDS
+    await page.click('[class="addLayer clickable noSelect"]');
+    await page.click('[class="clickable title"]');
     console.log('Selecting dataset...');
-    await page.waitForSelector('[data-test-id="select-menu"]', { timeout: 10000 });
-    await page.click('[data-test-id="select-menu"]');
+    await page.waitForSelector('.Select-placeholder', { timeout: 10000 });
+    await page.click('.Select-placeholder');
+    //await page.waitForSelector('[data-test-id="select-menu"]', { timeout: 10000 });
+    //await page.click('[data-test-id="select-menu"]');
     const optionId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
       const options = Array.from(elements);
@@ -104,24 +144,26 @@ const datasetName = Date.now().toString();
       return Promise.resolve(found.getAttribute('id'));
     });
     await page.click(`#${optionId}`);
-    await page.waitForSelector('label[data-test-id="categoryColumnInput"]+div', { timeout: 10000 });
-    await page.click('label[data-test-id="categoryColumnInput"]+div');
+    await page.waitForSelector('.Select-placeholder', { timeout: 10000 });
+    await page.click('.Select-placeholder');
+    //await page.waitForSelector('label[data-test-id="categoryColumnInput"]+div', { timeout: 10000 });
+    //await page.click('label[data-test-id="categoryColumnInput"]+div');
     console.log('Selecting columns...');
     const columnId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
       const options = Array.from(elements);
-      const found = options.find(e => e.textContent === 'title (text)');
+      const found = options.find(e => e.textContent === 'Latitude');
       return Promise.resolve(found.getAttribute('id'));
     });
     await page.click(`#${columnId}`);
     await page.click('div[data-test-id="entity-title"]');
-    console.log('Typing visualisation name...');
+    console.log('Typing map name...');
     await page.type('input[data-test-id="entity-title"]', `Visualisation of ${datasetName}`);
-    console.log('Saving visualisation...');
+    console.log('Saving map...');
     await page.click('button[data-test-id="save-changes"]');
     await page.goto('http://t1.lumen.local:3030/library');
     await page.waitForSelector('button[data-test-id="dashboard"]', { timeout: 10000 });
-    console.log(`Pivot table ${datasetName} was successfully created.\n`);
+    console.log(`Map ${datasetName} was successfully created.\n`);
 
     // Dashboard
     console.log('Accessing to dashboard creation...');
@@ -138,6 +180,7 @@ const datasetName = Date.now().toString();
     await page.click('i[data-test-id="fa-arrow"]');
     console.log(`Dashboard ${datasetName} was successfully created.\n`);
     console.log('THE TEST WAS SUCCESSFUL');
+    *****************************************************/
   } catch (err) {
     console.log(`THE TEST FAILED\n${err}`);
     process.exit(1);
