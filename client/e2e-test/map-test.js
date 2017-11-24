@@ -142,6 +142,7 @@ const datasetName = Date.now().toString();
     });
     await page.click(`#${optionId}`);
     await page.waitForSelector('[data-test-id="geomInput"]+div', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="xGroupColumnMenu"]+div', { timeout: 10000 });
     await page.click('[data-test-id="geomInput"]+div');
     console.log('Selecting columns...');
     const columnId = await page.evaluate(() => {
@@ -151,15 +152,14 @@ const datasetName = Date.now().toString();
       return Promise.resolve(found.getAttribute('id'));
     });
     await page.click(`#${columnId}`);
-    /* await page.click('[data-test-id="xGroupColumnMenu"]+div');
+    await page.click('[data-test-id="xGroupColumnMenu"]+div');
     const codingId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
       const options = Array.from(elements);
-      const found = options.find(e => e.textContent=== 'Country (text)');
+      const found = options.find(e => e.textContent === 'ISO 3166 Country Code (text)');
       return Promise.resolve(found.getAttribute('id'));
     });
-    // console.log(codingId);
-    await page.click(`#${codingId}`);*/
+    await page.click(`#${codingId}`);
     await page.click('div[data-test-id="entity-title"]');
     console.log('Typing map name...');
     await page.type('input[data-test-id="entity-title"]', `Map of ${datasetName}`);
