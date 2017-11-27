@@ -25,6 +25,7 @@ const datasetName = Date.now().toString();
 
 (async () => {
   const browser = await puppeteer.launch({
+    // headless: false,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -139,6 +140,7 @@ const datasetName = Date.now().toString();
     console.log('Selecting dataset...');
     await page.waitForSelector('[data-test-id="select-menu"]', { timeout: 10000 });
     await page.click('[data-test-id="select-menu"]');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: 10000 });
     await page.evaluate(`window.__datasetName = "${datasetName}"`);
     const optionId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -149,6 +151,7 @@ const datasetName = Date.now().toString();
     await page.click(`#${optionId}`);
     await page.waitForSelector('label[data-test-id="categoryColumnInput"]+div', { timeout: 10000 });
     await page.click('label[data-test-id="categoryColumnInput"]+div');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: 10000 });
     console.log('Selecting columns...');
     const columnId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -177,6 +180,7 @@ const datasetName = Date.now().toString();
     console.log('Selecting dataset...');
     await page.waitForSelector('[data-test-id="dataset-menu"]+div', { timeout: 10000 });
     await page.click('[data-test-id="dataset-menu"]+div');
+    // await page.waitForSelector('[aria-expanded="true"]', { timeout: 10000 });
     await page.evaluate(`window.__datasetName = "${datasetName}"`);
     const optionId2 = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -185,24 +189,26 @@ const datasetName = Date.now().toString();
       return Promise.resolve(found.getAttribute('id'));
     });
     await page.click(`#${optionId2}`);
+    console.log('Dataset selected.');
     await page.waitForSelector('[data-test-id="geomInput"]+div', { timeout: 10000 });
     await page.waitForSelector('[data-test-id="xGroupColumnMenu"]+div', { timeout: 10000 });
     await page.click('[data-test-id="geomInput"]+div');
-    await page.waitForSelector('[role="option"]', { timeout: 10000 });
+    // await page.waitForSelector('[aria-expanded="true"]', { timeout: 10000 });
     console.log('Placing geopoints on the map...');
     const columnId2 = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
       const options = Array.from(elements);
-      const found = options.find(e => e.textContent === 'Geopoint (geopoint)');
+      const found = options.find(e => e.textContent.startsWith('Geopoint'));
       return Promise.resolve(found.getAttribute('id'));
     });
     await page.click(`#${columnId2}`);
     await page.click('[data-test-id="xGroupColumnMenu"]+div');
+    // await page.waitForSelector('[aria-expanded="true"]', { timeout: 10000 });
     console.log('Coloring geopoints...');
     const codingId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
       const options = Array.from(elements);
-      const found = options.find(e => e.textContent === 'Country (text)');
+      const found = options.find(e => e.textContent.startsWith('Country'));
       return Promise.resolve(found.getAttribute('id'));
     });
     await page.click(`#${codingId}`);
