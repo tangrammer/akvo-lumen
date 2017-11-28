@@ -191,7 +191,7 @@ const datasetName = Date.now().toString();
     console.log('Dataset selected.');
     await page.waitForSelector('[data-test-id="color-coding-select"]', { timeout: 10000 });
     console.log('Placing geopoints on the map...');
-    await page.waitForSelector('[data-test-id="color-coding-select"][aria-readonly="false"]', { timeout: 10000 });
+    await sleep(2000);
     await page.click('[data-test-id="color-coding-select"]');
     console.log('Coloring geopoints...');
     const codingId = await page.evaluate(() => {
