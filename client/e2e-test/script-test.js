@@ -178,9 +178,8 @@ const datasetName = Date.now().toString();
     await page.click('[data-test-id="add-layer"]');
     await page.click('[data-test-id="layer"]');
     console.log('Selecting dataset...');
-    await page.waitForSelector('[data-test-id="dataset-menu"]+div', { timeout: 10000 });
-    await page.click('[data-test-id="dataset-menu"]+div');
-    // await page.waitForSelector('[aria-expanded="true"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="source-dataset-select"]', { timeout: 10000 });
+    await page.click('[data-test-id="source-dataset-select"]');
     await page.evaluate(`window.__datasetName = "${datasetName}"`);
     const optionId2 = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -190,19 +189,10 @@ const datasetName = Date.now().toString();
     });
     await page.click(`#${optionId2}`);
     console.log('Dataset selected.');
-    await page.waitForSelector('[data-test-id="geomInput"]+div', { timeout: 10000 });
-    await page.waitForSelector('[data-test-id="xGroupColumnMenu"]+div', { timeout: 10000 });
-    await page.click('[data-test-id="geomInput"]+div');
+    await page.waitForSelector('[data-test-id="color-coding-select"]', { timeout: 10000 });
     console.log('Placing geopoints on the map...');
-    const columnId2 = await page.evaluate(() => {
-      const elements = document.querySelectorAll('[role="option"]');
-      const options = Array.from(elements);
-      const found = options.find(e => e.textContent.startsWith('Geopoint'));
-      return Promise.resolve(found.id);
-    });
-    await page.click(`#${columnId2}`);
-    await page.click('[data-test-id="xGroupColumnMenu"]+div');
-    await page.waitForSelector('[id*="option"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="color-coding-select"][aria-readonly="false"]', { timeout: 10000 });
+    await page.click('[data-test-id="color-coding-select"]');
     console.log('Coloring geopoints...');
     const codingId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
