@@ -27,6 +27,8 @@ const username = process.env.USERNAME;
 
 const password = process.env.PASSWORD;
 
+const selectorTimeout = 10000;
+
 (async () => {
   const browser = await puppeteer.launch({
     // You can uncomment the next line to see the browser
@@ -44,14 +46,14 @@ const password = process.env.PASSWORD;
     await page.setViewport({ width: 1024, height: 768 });
     console.log('Accessing to https://lumencitest.akvoest.org...');
     await page.goto('https://lumencitest.akvotest.org');
-    await page.waitForSelector('#username', { timeout: 10000 });
+    await page.waitForSelector('#username', { timeout: selectorTimeout });
     console.log('Typing username...');
     await page.type('#username', username);
     console.log('Typing password...');
     await page.type('#password', password);
     console.log('Trying login...');
     await page.click('#kc-login');
-    await page.waitForSelector('button[data-test-id="dataset"]', { timeout: 10000 });
+    await page.waitForSelector('button[data-test-id="dataset"]', { timeout: selectorTimeout });
     console.log('Login was successful.\n');
     await page.evaluate(`window.__datasetName = "${datasetName}"`);
 
@@ -59,16 +61,16 @@ const password = process.env.PASSWORD;
     // Click Dataset+ option
     console.log('Accessing to dataset creation...');
     await page.click('button[data-test-id="dataset"]');
-    await page.waitForSelector('button[data-test-id="next"]', { timeout: 10000 });
+    await page.waitForSelector('button[data-test-id="next"]', { timeout: selectorTimeout });
     // Select link option
     console.log('Typing dataset link...');
     await page.click('input[data-test-id="source-option"][value="LINK"]');
     await page.click('button[data-test-id="next"]');
-    await page.waitForSelector('#linkFileInput', { timeout: 10000 });
+    await page.waitForSelector('#linkFileInput', { timeout: selectorTimeout });
     // Insert link
     await page.type('#linkFileInput', 'https://raw.githubusercontent.com/jokecamp/FootballData/master/other/stadiums-with-GPS-coordinates.csv');
     await page.click('button[data-test-id="next"]');
-    await page.waitForSelector('input[data-test-id="dataset-name"]', { timeout: 10000 });
+    await page.waitForSelector('input[data-test-id="dataset-name"]', { timeout: selectorTimeout });
     // Insert name
     console.log('Typing dataset name...');
     await page.type('input[data-test-id="dataset-name"]', datasetName);
@@ -86,7 +88,7 @@ const password = process.env.PASSWORD;
     });
     console.log(`ID extracted: ${id}\n`);
     let pending;
-    const timeOut = setTimeout(() => { console.log('Error waiting for pending dataset'); process.exit(1); }, 15 * 1000);
+    const timeOut = setTimeout(() => { console.log('Error waiting for pending dataset'); process.exit(1); }, 15 * selectorTimeout);
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
     do {
       await sleep(1000);
@@ -97,13 +99,13 @@ const password = process.env.PASSWORD;
 
     // Delete disturbing columns
     await page.click(`[data-test-name="${datasetName}"]`);
-    await page.waitForSelector('[data-test-id="Capacity"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="Capacity"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="Capacity"]');
     await page.click('[data-test-id="context-menu"] li:nth-of-type(3)');
-    await page.waitForSelector('[data-test-id="City"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="City"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="City"]');
     await page.click('[data-test-id="context-menu"] li:nth-of-type(3)');
-    await page.waitForSelector('[data-test-id="FDCOUK"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="FDCOUK"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="FDCOUK"]');
     await page.click('[data-test-id="context-menu"] li:nth-of-type(3)');
     // Create geopoints
@@ -111,7 +113,7 @@ const password = process.env.PASSWORD;
     console.log('Creating column of geopoints...');
     await page.click('li:nth-of-type(6)');
     console.log('Selecting latitudes...');
-    await page.waitForSelector('label[for="columnNameLat"]+div', { timeout: 10000 });
+    await page.waitForSelector('label[for="columnNameLat"]+div', { timeout: selectorTimeout });
     await page.click('label[for="columnNameLat"]+div');
     const latitudeId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -121,7 +123,7 @@ const password = process.env.PASSWORD;
     });
     await page.click(`#${latitudeId}`);
     console.log('Selecting longitudes...');
-    await page.waitForSelector('label[for="columnNameLong"]+div', { timeout: 10000 });
+    await page.waitForSelector('label[for="columnNameLong"]+div', { timeout: selectorTimeout });
     await page.click('label[for="columnNameLong"]+div');
     const longitudeId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -134,18 +136,18 @@ const password = process.env.PASSWORD;
     await page.type('[data-test-id="columnTitle"]', 'Geopoint');
     await page.click('[data-test-id="generate"]');
     await page.goto('https://lumencitest.akvotest.org');
-    await page.waitForSelector('button[data-test-id="visualisation"]', { timeout: 10000 });
+    await page.waitForSelector('button[data-test-id="visualisation"]', { timeout: selectorTimeout });
 
     // Pivot table
     console.log('Accessing to visualisation creation...');
     await page.click('button[data-test-id="visualisation"]');
     console.log('Selecting pivot table option...');
-    await page.waitForSelector('li[data-test-id="button-pivot-table"]', { timeout: 10000 });
+    await page.waitForSelector('li[data-test-id="button-pivot-table"]', { timeout: selectorTimeout });
     await page.click('li[data-test-id="button-pivot-table"]');
     console.log('Selecting dataset...');
-    await page.waitForSelector('[data-test-id="select-menu"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="select-menu"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="select-menu"]');
-    await page.waitForSelector('[aria-expanded="true"]', { timeout: 10000 });
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
     await page.evaluate(`window.__datasetName = "${datasetName}"`);
     const optionId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -154,10 +156,10 @@ const password = process.env.PASSWORD;
       return Promise.resolve(found.id);
     });
     await page.click(`#${optionId}`);
-    await sleep(1000);
-    await page.waitForSelector('label[data-test-id="categoryColumnInput"]+div', { timeout: 10000 });
+    await sleep(3000);
+    await page.waitForSelector('label[data-test-id="categoryColumnInput"]+div', { timeout: selectorTimeout });
     await page.click('label[data-test-id="categoryColumnInput"]+div');
-    await page.waitForSelector('[aria-expanded="true"]', { timeout: 10000 });
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
     console.log('Selecting columns...');
     const columnId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
@@ -173,20 +175,20 @@ const password = process.env.PASSWORD;
     await page.click('button[data-test-id="save-changes"]');
     console.log(`Pivot table ${datasetName} was successfully created.\n`);
     await page.goto('https://lumencitest.akvotest.org');
-    await page.waitForSelector(`[data-test-name="${datasetName}"]`, { timeout: 10000 });
+    await page.waitForSelector(`[data-test-name="${datasetName}"]`, { timeout: selectorTimeout });
 
     // Map
     console.log('Accessing to visualisation creation...');
     await page.click('button[data-test-id="visualisation"]');
     console.log('Selecting map option...');
-    await page.waitForSelector('li[data-test-id="button-map"]', { timeout: 10000 });
+    await page.waitForSelector('li[data-test-id="button-map"]', { timeout: selectorTimeout });
     await page.click('li[data-test-id="button-map"]');
     await page.click('[class^="addLayer"]');
-    // await page.waitForSelector('li[data-test-id="add-layer"]', { timeout: 10000 });
+    // await page.waitForSelector('li[data-test-id="add-layer"]', { timeout: selectorTimeout });
     // await page.click('[data-test-id="add-layer"]');
     await page.click('[data-test-id="layer"]');
     console.log('Selecting dataset...');
-    await page.waitForSelector('[data-test-id="source-dataset-select"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="source-dataset-select"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="source-dataset-select"]');
     await page.evaluate(`window.__datasetName = "${datasetName}"`);
     const optionId2 = await page.evaluate(() => {
@@ -197,9 +199,9 @@ const password = process.env.PASSWORD;
     });
     await page.click(`#${optionId2}`);
     console.log('Dataset selected.');
-    await page.waitForSelector('[data-test-id="color-coding-select"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="color-coding-select"]', { timeout: selectorTimeout });
     console.log('Placing geopoints on the map...');
-    await sleep(2000);
+    await sleep(3000);
     await page.click('[data-test-id="color-coding-select"]');
     console.log('Coloring geopoints...');
     const codingId = await page.evaluate(() => {
@@ -215,50 +217,50 @@ const password = process.env.PASSWORD;
     console.log('Saving map...');
     await page.click('[data-test-id="save-button"]');
     await page.goto('https://lumencitest.akvotest.org');
-    await page.waitForSelector('[data-test-id="dashboard"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="dashboard"]', { timeout: selectorTimeout });
     console.log(`Map ${datasetName} was successfully created.\n`);
 
     // Dashboard
     console.log('Accessing to dashboard creation...');
     await page.click('button[data-test-id="dashboard"]');
     console.log('Selecting visualisation...');
-    await page.waitForSelector(`[data-test-name="Map${datasetName}"]`, { timeout: 10000 });
+    await page.waitForSelector(`[data-test-name="Map${datasetName}"]`, { timeout: selectorTimeout });
     await page.click(`[data-test-name="Map${datasetName}"]`);
     console.log('Typing dashboard name...');
-    await page.waitForSelector('[data-test-id="dashboard-canvas-item"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="dashboard-canvas-item"]', { timeout: selectorTimeout });
     await page.click('div[data-test-id="entity-title"]');
     await page.type('input[data-test-id="entity-title"]', `Dashboard${datasetName}`);
     console.log('Saving dashboard...');
     await page.click('[data-test-id="save-changes"]');
     await page.click('[data-test-id="fa-arrow"]');
     await page.goto('https://lumencitest.akvotest.org');
-    await page.waitForSelector(`[data-test-name="Dashboard${datasetName}"]`, { timeout: 10000 });
+    await page.waitForSelector(`[data-test-name="Dashboard${datasetName}"]`, { timeout: selectorTimeout });
     console.log(`Dashboard ${datasetName} was successfully created.\n`);
 
     // Dataset from flow adding
     // Click Dataset+ option
     console.log('Accessing to dataset creation...');
     await page.click('button[data-test-id="dataset"]');
-    await page.waitForSelector('button[data-test-id="next"]', { timeout: 10000 });
+    await page.waitForSelector('button[data-test-id="next"]', { timeout: selectorTimeout });
     // Select link option
     await page.click('input[data-test-id="source-option"][value="AKVO_FLOW"]');
     await page.click('button[data-test-id="next"]');
-    await page.waitForSelector('[data-test-id="flow-url"]', { timeout: 10000 });
+    await page.waitForSelector('[data-test-id="flow-url"]', { timeout: selectorTimeout });
     // Insert link
     console.log('Typing dataset link...');
     await page.type('[data-test-id="flow-url"]', 'uat1/akvoflow.org');
     console.log('Selecting data...');
-    await sleep(3000);
+    await sleep(5000);
     await page.type('[data-test-id="flow-url"]+div [role="combobox"]', '_Lumen tests');
     await page.keyboard.press('Enter');
-    await sleep(3500);
+    await sleep(5000);
     await page.type('[data-test-id="flow-url"]+div+div [role="combobox"]', 'All');
     await page.keyboard.press('Enter');
-    await sleep(1000);
+    await sleep(5000);
     await page.type('[data-test-id="flow-url"]+div+div+div [role="combobox"]', 'All');
     await page.keyboard.press('Enter');
     await page.click('button[data-test-id="next"]');
-    await page.waitForSelector('input[data-test-id="dataset-name"]', { timeout: 10000 });
+    await page.waitForSelector('input[data-test-id="dataset-name"]', { timeout: selectorTimeout });
     // Insert name
     await page.click('input[data-test-id="dataset-name"]');
     for (let i = 0; i < 18; i += 1) {
@@ -268,7 +270,7 @@ const password = process.env.PASSWORD;
     // Import
     console.log('Saving dataset...');
     await page.click('button[data-test-id="next"]');
-    await page.waitForSelector(`[data-test-name="AkvoFlow${datasetName}"]`, { timeout: 10000 });
+    await page.waitForSelector(`[data-test-name="AkvoFlow${datasetName}"]`, { timeout: selectorTimeout });
     console.log(`Dataset from flow ${datasetName} was successfully created.\n`);
 
     console.log('THE ONLINE TEST WAS SUCCESSFUL');
