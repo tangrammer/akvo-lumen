@@ -42,8 +42,8 @@ const password = process.env.PASSWORD;
     // Login
     console.log('\nSTARTING LUMEN ONLINE TEST WITH PUPPETEER\n');
     await page.setViewport({ width: 1024, height: 768 });
-    console.log('Accessing to http://lumencitest.akvoest.org...');
-    await page.goto('http://lumencitest.akvotest.org');
+    console.log('Accessing to https://lumencitest.akvoest.org...');
+    await page.goto('https://lumencitest.akvotest.org');
     await page.waitForSelector('#username', { timeout: 10000 });
     console.log('Typing username...');
     await page.type('#username', username);
@@ -133,7 +133,7 @@ const password = process.env.PASSWORD;
     console.log('Typing column name...');
     await page.type('[data-test-id="columnTitle"]', 'Geopoint');
     await page.click('[data-test-id="generate"]');
-    await page.goto('http://lumencitest.akvotest.org');
+    await page.goto('https://lumencitest.akvotest.org');
     await page.waitForSelector('button[data-test-id="visualisation"]', { timeout: 10000 });
 
     // Pivot table
@@ -172,7 +172,7 @@ const password = process.env.PASSWORD;
     console.log('Saving visualisation...');
     await page.click('button[data-test-id="save-changes"]');
     console.log(`Pivot table ${datasetName} was successfully created.\n`);
-    await page.goto('http://lumencitest.akvotest.org');
+    await page.goto('https://lumencitest.akvotest.org');
     await page.waitForSelector(`[data-test-name="${datasetName}"]`, { timeout: 10000 });
 
     // Map
@@ -214,7 +214,7 @@ const password = process.env.PASSWORD;
     await page.type('input[data-test-id="entity-title"]', `Map${datasetName}`);
     console.log('Saving map...');
     await page.click('[data-test-id="save-button"]');
-    await page.goto('http://lumencitest.akvotest.org');
+    await page.goto('https://lumencitest.akvotest.org');
     await page.waitForSelector('[data-test-id="dashboard"]', { timeout: 10000 });
     console.log(`Map ${datasetName} was successfully created.\n`);
 
@@ -231,7 +231,7 @@ const password = process.env.PASSWORD;
     console.log('Saving dashboard...');
     await page.click('[data-test-id="save-changes"]');
     await page.click('[data-test-id="fa-arrow"]');
-    await page.goto('http://lumencitest.akvotest.org');
+    await page.goto('https://lumencitest.akvotest.org');
     await page.waitForSelector(`[data-test-name="Dashboard${datasetName}"]`, { timeout: 10000 });
     console.log(`Dashboard ${datasetName} was successfully created.\n`);
 
