@@ -25,6 +25,7 @@ const datasetName = Date.now().toString();
 
 (async () => {
   const browser = await puppeteer.launch({
+    // You can uncomment the next line to see the browser
     // headless: false,
     args: [
       '--no-sandbox',
@@ -35,7 +36,7 @@ const datasetName = Date.now().toString();
 
   try {
     // Login
-    console.log('\nSTARTING LUMEN TEST WITH PUPPETEER\n');
+    console.log('\nSTARTING LUMEN LOCAL TEST WITH PUPPETEER\n');
     await page.setViewport({ width: 1024, height: 768 });
     console.log('Accessing to http://t1.lumen.local:3030...');
     await page.goto('http://t1.lumen.local:3030/');
@@ -224,7 +225,7 @@ const datasetName = Date.now().toString();
     await page.click('[data-test-id="save-changes"]');
     await page.click('[data-test-id="fa-arrow"]');
     console.log(`Dashboard ${datasetName} was successfully created.\n`);
-    console.log('THE TEST WAS SUCCESSFUL');
+    console.log('THE LOCAL TEST WAS SUCCESSFUL');
   } catch (err) {
     console.log(`THE TEST FAILED\n${err}`);
     process.exit(1);
