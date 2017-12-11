@@ -29,6 +29,12 @@ const password = process.env.PASSWORD;
 
 const selectorTimeout = 10000;
 
+let optionId;
+
+let columnId;
+
+let aggregationId;
+
 (async () => {
   const browser = await puppeteer.launch({
     // You can uncomment the next line to see the browser
@@ -102,8 +108,8 @@ const selectorTimeout = 10000;
     await page.waitForSelector('[data-test-id="Capacity"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="Capacity"]');
     await page.click('[data-test-id="context-menu"] li:nth-of-type(3)');
-    await page.waitForSelector('[data-test-id="City"]', { timeout: selectorTimeout });
-    await page.click('[data-test-id="City"]');
+    await page.waitForSelector('[data-test-id="Stadium"]', { timeout: selectorTimeout });
+    await page.click('[data-test-id="Stadium"]');
     await page.click('[data-test-id="context-menu"] li:nth-of-type(3)');
     await page.waitForSelector('[data-test-id="FDCOUK"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="FDCOUK"]');
@@ -149,7 +155,7 @@ const selectorTimeout = 10000;
     await page.click('[data-test-id="select-menu"]');
     await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
     await page.evaluate(`window.__datasetName = "${datasetName}"`);
-    const optionId = await page.evaluate(() => {
+    optionId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
       const options = Array.from(elements);
       const found = options.find(e => e.textContent === __datasetName);
@@ -161,7 +167,7 @@ const selectorTimeout = 10000;
     await page.click('label[data-test-id="categoryColumnInput"]+div');
     await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
     console.log('Selecting columns...');
-    const columnId = await page.evaluate(() => {
+    columnId = await page.evaluate(() => {
       const elements = document.querySelectorAll('[role="option"]');
       const options = Array.from(elements);
       const found = options.find(e => e.textContent === 'Country (text)');
@@ -176,6 +182,106 @@ const selectorTimeout = 10000;
     console.log(`Pivot table ${datasetName} was successfully created.\n`);
     await page.goto('https://lumencitest.akvotest.org');
     await page.waitForSelector(`[data-test-name="${datasetName}"]`, { timeout: selectorTimeout });
+
+     // Bar chart
+    console.log('Accessing to visualisation creation...');
+    await page.click('button[data-test-id="visualisation"]');
+    console.log('Selecting bar chart option...');
+    await page.waitForSelector('li[data-test-id="button-bar"]', { timeout: selectorTimeout });
+    await page.click('li[data-test-id="button-bar"]');
+    console.log('Selecting dataset...');
+    await page.waitForSelector('[data-test-id="select-menu"]', { timeout: selectorTimeout });
+    await page.click('[data-test-id="select-menu"]');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
+    await page.evaluate(`window.__datasetName = "${datasetName}"`);
+    optionId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === __datasetName);
+      return Promise.resolve(found.id);
+    });
+    await page.click(`#${optionId}`);
+    await sleep(3000);
+    await page.waitForSelector('label[data-test-id="metricColumnYInput"]+div', { timeout: selectorTimeout });
+    await page.click('label[data-test-id="metricColumnYInput"]+div');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
+    console.log('Selecting columns...');
+    columnId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === 'Team (text)');
+      return Promise.resolve(found.id);
+    });
+    await page.click(`#${columnId}`);
+    await page.waitForSelector('label[data-test-id="xGroupColumnMenu"]+div', { timeout: selectorTimeout });
+    await page.click('label[data-test-id="xGroupColumnMenu"]+div');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
+    console.log('Selecting columns...');
+    columnId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === 'Country (text)');
+      return Promise.resolve(found.id);
+    });
+    await page.click(`#${columnId}`);
+    await page.click('label[data-test-id="yAggregationMenu"]+div');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
+    console.log('Selecting aggregation type...');
+    aggregationId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === 'Count');
+      return Promise.resolve(found.id);
+    });
+    await page.click(`#${aggregationId}`);
+    await page.click('div[data-test-id="entity-title"]');
+    console.log('Typing bar chart name...');
+    await page.type('input[data-test-id="entity-title"]', `BarChart${datasetName}`);
+    console.log('Saving bar chart...');
+    await page.click('button[data-test-id="save-changes"]');
+    console.log(`Bar chart ${datasetName} was successfully created.\n`);
+    await page.goto('https://lumencitest.akvotest.org');
+    await page.waitForSelector(`[data-test-name="${datasetName}"]`, { timeout: selectorTimeout });
+
+    // Pie chart
+    console.log('Accessing to visualisation creation...');
+    await page.click('button[data-test-id="visualisation"]');
+    console.log('Selecting pie chart option...');
+    await page.waitForSelector('li[data-test-id="button-pie"]', { timeout: selectorTimeout });
+    await page.click('li[data-test-id="button-pie"]');
+    console.log('Selecting dataset...');
+    await page.waitForSelector('[data-test-id="select-menu"]', { timeout: selectorTimeout });
+    await page.click('[data-test-id="select-menu"]');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
+    await page.evaluate(`window.__datasetName = "${datasetName}"`);
+    optionId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === __datasetName);
+      return Promise.resolve(found.id);
+    });
+    await page.click(`#${optionId}`);
+    await sleep(3000);
+    await page.waitForSelector('label[data-test-id="xGroupColumnMenu"]+div', { timeout: selectorTimeout });
+    await page.click('label[data-test-id="xGroupColumnMenu"]+div');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
+    console.log('Selecting columns...');
+    columnId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === 'Country (text)');
+      return Promise.resolve(found.id);
+    });
+    await page.click(`#${columnId}`);
+    await page.click('div[data-test-id="entity-title"]');
+    console.log('Typing pie chart name...');
+    await page.type('input[data-test-id="entity-title"]', `PieChart${datasetName}`);
+    console.log('Saving pie chart...');
+    await page.click('button[data-test-id="save-changes"]');
+    console.log(`Pie chart ${datasetName} was successfully created.\n`);
+    await page.goto('https://lumencitest.akvotest.org');
+    await page.waitForSelector(`[data-test-name="${datasetName}"]`, { timeout: selectorTimeout });
+
 
     // Map
     console.log('Accessing to visualisation creation...');
