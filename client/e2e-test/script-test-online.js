@@ -97,14 +97,15 @@ let aggregationId;
     const timeOut = setTimeout(() => { console.log('Error waiting for pending dataset'); process.exit(1); }, 15 * selectorTimeout);
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
     do {
-      await sleep(1000);
+      await sleep(2000);
       pending = await page.$(`[data-test-name="${datasetName}"] [data-test-id="pending"]`);
       console.log('Pending...');
     } while (pending);
     clearTimeout(timeOut);
 
-    // Delete disturbing columns
+    // Modify dataset
     await page.click(`[data-test-name="${datasetName}"]`);
+    // Delete columns
     await page.waitForSelector('[data-test-id="Capacity"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="Capacity"]');
     await page.click('[data-test-id="context-menu"] li:nth-of-type(3)');
@@ -290,6 +291,7 @@ let aggregationId;
     await page.waitForSelector('li[data-test-id="button-map"]', { timeout: selectorTimeout });
     await page.click('li[data-test-id="button-map"]');
     await page.click('[class^="addLayer"]');
+    // We should change the line above and use a data-test-id
     // await page.waitForSelector('li[data-test-id="add-layer"]', { timeout: selectorTimeout });
     // await page.click('[data-test-id="add-layer"]');
     await page.click('[data-test-id="layer"]');

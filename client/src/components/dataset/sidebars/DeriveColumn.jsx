@@ -196,6 +196,7 @@ class DeriveColumn extends Component {
               onChange={evt =>
                 this.setTransformationProperty(['args', 'newColumnTitle'], evt.target.value)
               }
+              data-test-id="column-title"
             />
           </div>
           <div className="inputGroup">
@@ -229,6 +230,7 @@ class DeriveColumn extends Component {
               <FormattedMessage id="javascript_code" />
             </label>
             <CodeMirror
+              data-test-id="code"
               placeholder={intl.formatMessage({ id: 'type_javascript_expression_here' })}
               value={code}
               onChange={c => this.setTransformationProperty(['args', 'code'], c)}

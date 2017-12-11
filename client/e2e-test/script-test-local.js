@@ -99,8 +99,19 @@ let aggregationId;
     } while (pending);
     clearTimeout(timeOut);
 
-    // Delete disturbing columns
+    // Modify dataset
     await page.click(`[data-test-name="${datasetName}"]`);
+    // Derive column
+    await page.waitForSelector('[data-test-id="transform"]', { timeout: selectorTimeout });
+    await page.click('[data-test-id="transform"]');
+    console.log('Deriving a column...');
+    await page.click('li:nth-of-type(4)');
+    await page.type('[data-test-id="column-title"]', 'Derived column');
+    await page.click('[class^="CodeMirror"]');
+    await page.type('[class^="CodeMirror"]', 'row["City"]+", "+row["Country"]');
+    await page.click('[data-test-id="generate"]');
+    console.log('Column derived correctly...');
+    // Delete columns
     await page.waitForSelector('[data-test-id="Capacity"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="Capacity"]');
     await page.click('[data-test-id="context-menu"] li:nth-of-type(3)');
