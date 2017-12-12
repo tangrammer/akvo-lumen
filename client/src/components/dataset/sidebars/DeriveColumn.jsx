@@ -225,12 +225,11 @@ class DeriveColumn extends Component {
               options={errorStrategies}
             />
           </div>
-          <div className="inputGroup">
+          <div className="inputGroup" data-test-id="code">
             <label htmlFor="code">
               <FormattedMessage id="javascript_code" />
             </label>
             <CodeMirror
-              data-test-id="code"
               placeholder={intl.formatMessage({ id: 'type_javascript_expression_here' })}
               value={code}
               onChange={c => this.setTransformationProperty(['args', 'code'], c)}

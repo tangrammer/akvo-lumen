@@ -106,9 +106,10 @@ let aggregationId;
     await page.click('[data-test-id="transform"]');
     console.log('Deriving a column...');
     await page.click('li:nth-of-type(4)');
+    console.log('Typing derived column name...');
     await page.type('[data-test-id="column-title"]', 'Derived column');
-    await page.click('[class^="CodeMirror"]');
-    await page.type('[class^="CodeMirror"]', 'row["City"]+", "+row["Country"]');
+    await page.click('[data-test-id="code"]');
+    await page.type('[data-test-id="code"]', 'row["City"]+", "+row["Country"]');
     await page.click('[data-test-id="generate"]');
     console.log('Column derived correctly...');
     // Delete columns
@@ -242,6 +243,33 @@ let aggregationId;
       return Promise.resolve(found.id);
     });
     await page.click(`#${aggregationId}`);
+    await page.click('label[data-test-id="truncateSizeInput"]+div');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
+    const topId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === '10');
+      return Promise.resolve(found.id);
+    });
+    await page.click(`#${topId}`);
+    await page.click('label[data-test-id="subGroupColumnMenu"]+div');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
+    const subgroupId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[data-test-id="subGroupColumnMenu"]+div [role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === 'Team (text)');
+      return Promise.resolve(found.id);
+    });
+    await page.click(`#${subgroupId}`);
+    await page.click('label[data-test-id="subBucketMethodInput"]+div');
+    await page.waitForSelector('[aria-expanded="true"]', { timeout: selectorTimeout });
+    const subbucketId = await page.evaluate(() => {
+      const elements = document.querySelectorAll('[role="option"]');
+      const options = Array.from(elements);
+      const found = options.find(e => e.textContent === 'Stack bars');
+      return Promise.resolve(found.id);
+    });
+    await page.click(`#${subbucketId}`);
     await page.click('div[data-test-id="entity-title"]');
     console.log('Typing bar chart name...');
     await page.type('input[data-test-id="entity-title"]', `BarChart${datasetName}`);
