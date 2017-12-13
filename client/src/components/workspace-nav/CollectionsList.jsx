@@ -28,6 +28,7 @@ export default function CollectionsList({
           <button
             onClick={onShowCreateCollectionModal}
             className="addCollection clickable button"
+            data-test-id="new-collection-button"
           >
             <i className="fa fa-plus-square-o" aria-hidden="true" />
           </button>
