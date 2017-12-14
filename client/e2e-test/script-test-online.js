@@ -40,7 +40,7 @@ let aggregationId;
 (async () => {
   const browser = await puppeteer.launch({
     // You can uncomment the next line to see the browser
-    headless: false,
+    // headless: false,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -95,7 +95,7 @@ let aggregationId;
     });
     console.log(`ID extracted: ${id}\n`);
     let pending;
-    const timeOut = setTimeout(() => { console.log('Error waiting for pending dataset'); process.exit(1); }, selectorTimeout);
+    let timeOut = setTimeout(() => { console.log('Error waiting for pending dataset'); process.exit(1); }, selectorTimeout);
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
     do {
       await sleep(1000);
@@ -103,7 +103,8 @@ let aggregationId;
       console.log('Pending...');
     } while (pending);
     clearTimeout(timeOut);
-    assert.ok(await page.$(`[data-test-name="${datasetName}"] :not([data-test-id="pending"])`) !== undefined, 'Failure in dataset creation.');
+    const datasetExists = await page.$(`[data-test-name="${datasetName}"] :not([data-test-id="pending"])`) !== undefined;
+    assert.ok(datasetExists, 'Failure in dataset creation.');
     console.log(`Dataset ${datasetName} was successfully created.\n`);
 
     // Modify dataset
@@ -200,13 +201,11 @@ let aggregationId;
     await page.click('button[data-test-id="save-changes"]');
     await page.goto('https://lumencitest.akvotest.org');
     await sleep(1000);
-    if (await page.$(`[data-test-name="PivotTable${datasetName}"]`) !== undefined) {
-      console.log(`Pivot table ${datasetName} was successfully created.\n`);
-    } else {
-      throw 'Failure in pivot table creation.';
-    }
+    const pivotExists = await page.$(`[data-test-name="PivotTable${datasetName}"]`) !== undefined;
+    assert.ok(pivotExists, 'Failure in pivot table creation.');
+    console.log(`Pivot table ${datasetName} was successfully created.\n`);
 
-     // Bar chart
+    // Bar chart
     console.log('Accessing to visualisation creation...');
     await page.click('button[data-test-id="visualisation"]');
     console.log('Selecting bar chart option...');
@@ -291,11 +290,9 @@ let aggregationId;
     await page.click('button[data-test-id="save-changes"]');
     await page.goto('https://lumencitest.akvotest.org');
     await sleep(1000);
-    if (await page.$(`[data-test-name="BarChart${datasetName}"]`) !== undefined) {
-      console.log(`Bar chart ${datasetName} was successfully created.\n`);
-    } else {
-      throw 'Failure in bar chart creation.';
-    }
+    const barChartExists = await page.$(`[data-test-name="BarChart${datasetName}"]`) !== undefined;
+    assert.ok(barChartExists, 'Failure in bar chart creation.');
+    console.log(`Bar chart ${datasetName} was successfully created.\n`);
 
     // Pie chart
     console.log('Accessing to visualisation creation...');
@@ -334,11 +331,9 @@ let aggregationId;
     await page.click('button[data-test-id="save-changes"]');
     await page.goto('https://lumencitest.akvotest.org');
     await sleep(1000);
-    if (await page.$(`[data-test-name="PieChart${datasetName}"]`) !== undefined) {
-      console.log(`Pie chart ${datasetName} was successfully created.\n`);
-    } else {
-      throw 'Failure in pie chart creation.';
-    }
+    const pieChartExists = await page.$(`[data-test-name="PieChart${datasetName}"]`) !== undefined;
+    assert.ok(pieChartExists, 'Failure in pie chart creation.');
+    console.log(`Pie chart ${datasetName} was successfully created.\n`);
 
     // Map
     console.log('Accessing to visualisation creation...');
@@ -382,11 +377,9 @@ let aggregationId;
     await page.click('[data-test-id="save-button"]');
     await page.goto('https://lumencitest.akvotest.org');
     await sleep(1000);
-    if (await page.$(`[data-test-name="Map${datasetName}"]`) !== undefined) {
-      console.log(`Map ${datasetName} was successfully created.\n`);
-    } else {
-      throw new 'Failure in map creation.';
-    }
+    const mapExists = await page.$(`[data-test-name="Map${datasetName}"]`) !== undefined;
+    assert.ok(mapExists, 'Failure in map creation.');
+    console.log(`Map ${datasetName} was successfully created.\n`);
 
     // Dashboard
     console.log('Accessing to dashboard creation...');
@@ -403,11 +396,9 @@ let aggregationId;
     await page.click('[data-test-id="fa-arrow"]');
     await page.goto('https://lumencitest.akvotest.org');
     await sleep(1000);
-    if (await page.$(`[data-test-name="Dashboard${datasetName}"]`) !== undefined) {
-      console.log(`Dashboard ${datasetName} was successfully created.\n`);
-    } else {
-      throw 'Failure in dashboard creation.';
-    }
+    const dashboardExists = await page.$(`[data-test-name="Dashboard${datasetName}"]`) !== undefined;
+    assert.ok(dashboardExists, 'Failure in dashboard creation.');
+    console.log(`Dashboard ${datasetName} was successfully created.\n`);
 
     // Dataset from flow adding
     // Click Dataset+ option
@@ -425,11 +416,11 @@ let aggregationId;
     await sleep(5000);
     await page.type('[data-test-id="flow-url"]+div [role="combobox"]', '_Lumen tests');
     await page.keyboard.press('Enter');
-    await sleep(5000);
-    await page.type('[data-test-id="flow-url"]+div+div [role="combobox"]', 'All');
+    await sleep(4000);
+    await page.type('[data-test-id="flow-url"]+div+div [role="combobox"]', 'All questions survey & Caddisfly (smaller dataset)');
     await page.keyboard.press('Enter');
-    await sleep(5000);
-    await page.type('[data-test-id="flow-url"]+div+div+div [role="combobox"]', 'All');
+    await sleep(3000);
+    await page.type('[data-test-id="flow-url"]+div+div+div [role="combobox"]', 'All questions form');
     await page.keyboard.press('Enter');
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector('input[data-test-id="dataset-name"]', { timeout: selectorTimeout });
@@ -443,30 +434,28 @@ let aggregationId;
     console.log('Saving dataset...');
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector(`[data-test-name="AkvoFlow${datasetName}"]`, { timeout: selectorTimeout });
-    if (await page.$(`[data-test-name="AkvoFlow${datasetName}"]`) !== undefined) {
-      console.log(`Dataset from flow ${datasetName} was successfully created.\n`);
-    } else {
-      throw 'Failure in dataset creation.';
-    }
+    timeOut = setTimeout(() => { console.log('Error waiting for pending dataset'); process.exit(1); }, selectorTimeout);
+    do {
+      await sleep(1000);
+      pending = await page.$(`[data-test-name="AkvoFlow${datasetName}"] [data-test-id="pending"]`);
+      console.log('Pending...');
+    } while (pending);
+    clearTimeout(timeOut);
+    const dataFlowExists = await page.$(`[data-test-name="AkvoFlow${datasetName}"]`) !== undefined;
+    assert.ok(dataFlowExists, 'Failure in dataset creation.');
+    console.log(`Dataset from flow ${datasetName} was successfully created.\n`);
 
     // Delete dataset
     console.log('Deleting dataset...');
-    await page.waitForSelector(':not([data-test-id="pending"])');
     await page.click(`[data-test-name="AkvoFlow${datasetName}"] [data-test-id="show-controls"]`);
-    await sleep(1000);
     await page.waitForSelector('[data-test-id="context-menu"] li:nth-of-type(6)', { timeout: selectorTimeout });
     await page.click('[data-test-id="context-menu"] li:nth-of-type(6)');
     await page.waitForSelector('[data-test-id="next"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="next"]');
-    await page.waitForSelector(':not([data-test-id="pending"])');
-    await sleep(4000);
-    await page.goto('https://lumencitest.akvotest.org');
     await sleep(1000);
-    /* if (await page.$(`[data-test-name="AkvoFlow${datasetName}"]`) == undefined) {
-      console.log(`AkvoFlow ${datasetName} was successfully deleted.\n`);
-    } else {
-      throw 'Failure in dataset deletion.';
-    }*/
+    const datasetDeleted = await page.$(`[data-test-name="AkvoFlow${datasetName}"]`) == null;
+    assert.ok(datasetDeleted, 'Failure in dataset deletion.');
+    console.log(`AkvoFlow ${datasetName} was successfully deleted.\n`);
     console.log('THE ONLINE TEST WAS SUCCESSFUL.');
   } catch (err) {
     console.log(`THE TEST FAILED:\n${err}`);
