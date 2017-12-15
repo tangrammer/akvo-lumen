@@ -14,6 +14,18 @@
  * limitations under the License.
  */
 
+/**
+ *
+ *                   CLEAN ONLINE WITH PUPPETEER
+ *
+ * This script accedes to Lumen in the tenant lumencitest.akvotest.org
+ * using a headless Chromium browser. It tries the following:
+ * - Log in using the environment variables USERNAME and PASSWORD.
+ * - Delete all the elements created by the user: datasets, visualisations
+ *   or dashboards.
+ *
+ */
+
 /* global __datasetName */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable import/no-unresolved */

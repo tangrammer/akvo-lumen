@@ -14,6 +14,25 @@
  * limitations under the License.
  */
 
+/**
+ *
+ *                   ONLINE TEST WITH PUPPETEER
+ *
+ * This script accedes to Lumen in the tenant lumencitest.akvotest.org
+ * using a headless Chromium browser. It tries the following tasks:
+ * - Log in using the environment variables USERNAME and PASSWORD.
+ * - Create a dataset using the data from the link you can see in the
+ *   datasetLink constant declaration.
+ * - Transform the dataset deriving and deleting columns and creating a
+ *   geopoint.
+ * - Create visualisations for the dataset: a pivot table, a bar chart, a
+ *   pie chart and a map (using the geopoint created).
+ * - Create a dashboard with the visualisations created.
+ * - Create a dataset using data from Flow.
+ * - Delete the dataset created using data from Flow.
+ *
+ */
+
 /* global __datasetName */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable import/no-unresolved */
@@ -22,6 +41,8 @@
 const puppeteer = require('puppeteer');
 
 const assert = require('assert');
+
+const datasetLink = 'https://raw.githubusercontent.com/jokecamp/FootballData/master/other/stadiums-with-GPS-coordinates.csv';
 
 const datasetName = Date.now().toString();
 
@@ -76,7 +97,7 @@ let aggregationId;
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector('#linkFileInput', { timeout: selectorTimeout });
     // Insert link
-    await page.type('#linkFileInput', 'https://raw.githubusercontent.com/jokecamp/FootballData/master/other/stadiums-with-GPS-coordinates.csv');
+    await page.type('#linkFileInput', datasetLink);
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector('input[data-test-id="dataset-name"]', { timeout: selectorTimeout });
     // Insert name
@@ -113,6 +134,8 @@ let aggregationId;
     await page.waitForSelector('[data-test-id="transform"]', { timeout: selectorTimeout });
     await page.click('[data-test-id="transform"]');
     console.log('Deriving a column...');
+    await sleep(3000);
+    await page.waitForSelector('li:nth-of-type(4)', { timeout: selectorTimeout });
     await page.click('li:nth-of-type(4)');
     console.log('Typing derived column name...');
     await page.type('.titleTextInput', 'Derived column');
@@ -162,10 +185,10 @@ let aggregationId;
     await page.type('[data-test-id="columnTitle"]', 'Geopoint');
     await page.click('[data-test-id="generate"]');
     await page.goto('https://lumencitest.akvotest.org');
-    await page.waitForSelector('button[data-test-id="visualisation"]', { timeout: selectorTimeout });
 
     // Pivot table
     console.log('Accessing to visualisation creation...');
+    await page.waitForSelector('[data-test-id="visualisation"]', { timeout: selectorTimeout });
     await page.click('button[data-test-id="visualisation"]');
     console.log('Selecting pivot table option...');
     await page.waitForSelector('li[data-test-id="button-pivot-table"]', { timeout: selectorTimeout });
@@ -384,9 +407,12 @@ let aggregationId;
     // Dashboard
     console.log('Accessing to dashboard creation...');
     await page.click('button[data-test-id="dashboard"]');
-    console.log('Selecting visualisation...');
+    console.log('Selecting visualisations...');
     await page.waitForSelector(`[data-test-name="Map${datasetName}"]`, { timeout: selectorTimeout });
     await page.click(`[data-test-name="Map${datasetName}"]`);
+    await page.click(`[data-test-name="BarChart${datasetName}"]`);
+    await page.click(`[data-test-name="PieChart${datasetName}"]`);
+    await page.click(`[data-test-name="PivotTable${datasetName}"]`);
     console.log('Typing dashboard name...');
     await page.waitForSelector('[data-test-id="dashboard-canvas-item"]', { timeout: selectorTimeout });
     await page.click('div[data-test-id="entity-title"]');
@@ -405,12 +431,12 @@ let aggregationId;
     console.log('Accessing to dataset creation...');
     await page.click('button[data-test-id="dataset"]');
     await page.waitForSelector('button[data-test-id="next"]', { timeout: selectorTimeout });
-    // Select link option
+    // Select flow option
     await page.click('input[data-test-id="source-option"][value="AKVO_FLOW"]');
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector('[data-test-id="flow-url"]', { timeout: selectorTimeout });
-    // Insert link
-    console.log('Typing dataset link...');
+    // Select data
+    console.log('Typing dataset location...');
     await page.type('[data-test-id="flow-url"]', 'uat1/akvoflow.org');
     console.log('Selecting data...');
     await sleep(5000);
@@ -425,10 +451,16 @@ let aggregationId;
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector('input[data-test-id="dataset-name"]', { timeout: selectorTimeout });
     // Insert name
+    console.log('Typing dataset name...');
     await page.click('input[data-test-id="dataset-name"]');
-    for (let i = 0; i < 18; i += 1) {
+    let caracteres;
+    do {
       await page.keyboard.press('Backspace');
-    }
+      caracteres = await page.evaluate(() => {
+        const element = document.querySelector('[data-test-id="dataset-name"]');
+        return element.getAttribute('value');
+      });
+    } while (caracteres.length > 0);
     await page.type('input[data-test-id="dataset-name"]', `AkvoFlow${datasetName}`);
     // Import
     console.log('Saving dataset...');

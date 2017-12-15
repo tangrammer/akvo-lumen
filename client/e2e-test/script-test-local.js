@@ -14,12 +14,31 @@
  * limitations under the License.
  */
 
+/**
+ *
+ *                   LOCAL TEST WITH PUPPETEER
+ *
+ * This script accedes to Lumen locally using a headless Chromium browser.
+ * It tries the following tasks:
+ * - Log in as jerome.
+ * - Create a dataset using the data from the link you can see in the
+ *   datasetLink constant declaration.
+ * - Transform the dataset deriving and deleting columns and creating a
+ *   geopoint.
+ * - Create visualisations for the dataset: a pivot table, a bar chart, a
+ *   pie chart and a map (using the geopoint created).
+ * - Create a dashboard with the visualisations created.
+ *
+ */
+
 /* global __datasetName */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable import/no-unresolved */
 /* eslint-disable no-console */
 
 const puppeteer = require('puppeteer');
+
+const datasetLink = 'https://raw.githubusercontent.com/jokecamp/FootballData/master/other/stadiums-with-GPS-coordinates.csv';
 
 const datasetName = Date.now().toString();
 
@@ -70,7 +89,7 @@ let aggregationId;
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector('#linkFileInput', { timeout: selectorTimeout });
     // Insert link
-    await page.type('#linkFileInput', 'https://raw.githubusercontent.com/jokecamp/FootballData/master/other/stadiums-with-GPS-coordinates.csv');
+    await page.type('#linkFileInput', datasetLink);
     await page.click('button[data-test-id="next"]');
     await page.waitForSelector('input[data-test-id="dataset-name"]', { timeout: selectorTimeout });
     // Insert name
@@ -361,9 +380,12 @@ let aggregationId;
     // Dashboard
     console.log('Accessing to dashboard creation...');
     await page.click('button[data-test-id="dashboard"]');
-    console.log('Selecting visualisation...');
+    console.log('Selecting visualisations...');
     await page.waitForSelector(`[data-test-name="Map${datasetName}"]`, { timeout: selectorTimeout });
     await page.click(`[data-test-name="Map${datasetName}"]`);
+    await page.click(`[data-test-name="BarChart${datasetName}"]`);
+    await page.click(`[data-test-name="PieChart${datasetName}"]`);
+    await page.click(`[data-test-name="PivotTable${datasetName}"]`);
     console.log('Typing dashboard name...');
     await page.waitForSelector('[data-test-id="dashboard-canvas-item"]', { timeout: selectorTimeout });
     await page.click('div[data-test-id="entity-title"]');
