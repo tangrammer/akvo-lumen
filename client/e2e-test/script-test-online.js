@@ -129,6 +129,8 @@ let aggregationId;
     console.log(`Dataset ${datasetName} was successfully created.\n`);
 
     // Modify dataset
+    await page.goto('https://lumencitest.akvotest.org/library');
+    await page.waitForSelector(`[data-test-name="${datasetName}"]`);
     await page.click(`[data-test-name="${datasetName}"]`);
     // Derive column
     await page.waitForSelector('[data-test-id="transform"]', { timeout: selectorTimeout });
