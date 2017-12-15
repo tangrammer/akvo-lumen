@@ -207,6 +207,8 @@ let aggregationId;
       return Promise.resolve(found.id);
     });
     await page.click(`#${optionId}`);
+    // These sleeps should be improved with while loops,
+    // trying to access the selectors and using timeouts
     await sleep(3000);
     await page.waitForSelector('label[data-test-id="categoryColumnInput"]+div', { timeout: selectorTimeout });
     await page.click('label[data-test-id="categoryColumnInput"]+div');
@@ -248,6 +250,8 @@ let aggregationId;
       return Promise.resolve(found.id);
     });
     await page.click(`#${optionId}`);
+    // These sleeps should be improved with while loops,
+    // trying to access the selectors and using timeouts
     await sleep(3000);
     await page.waitForSelector('label[data-test-id="metricColumnYInput"]+div', { timeout: selectorTimeout });
     await page.click('label[data-test-id="metricColumnYInput"]+div');
@@ -337,6 +341,8 @@ let aggregationId;
       return Promise.resolve(found.id);
     });
     await page.click(`#${optionId}`);
+    // These sleeps should be improved with while loops,
+    // trying to access the selectors and using timeouts
     await sleep(3000);
     await page.waitForSelector('label[data-test-id="xGroupColumnMenu"]+div', { timeout: selectorTimeout });
     await page.click('label[data-test-id="xGroupColumnMenu"]+div');
@@ -385,6 +391,8 @@ let aggregationId;
     console.log('Dataset selected.');
     await page.waitForSelector('[data-test-id="color-coding-select"]', { timeout: selectorTimeout });
     console.log('Placing geopoints on the map...');
+    // These sleeps should be improved with while loops,
+    // trying to access the selectors and using timeouts
     await sleep(3000);
     await page.click('[data-test-id="color-coding-select"]');
     console.log('Coloring geopoints...');
@@ -401,6 +409,7 @@ let aggregationId;
     console.log('Saving map...');
     await page.click('[data-test-id="save-button"]');
     await page.goto('https://lumencitest.akvotest.org');
+    // It would be better to use a waitForSelector
     await sleep(1000);
     const mapExists = await page.$(`[data-test-name="Map${datasetName}"]`) !== undefined;
     assert.ok(mapExists, 'Failure in map creation.');
@@ -423,6 +432,7 @@ let aggregationId;
     await page.click('[data-test-id="save-changes"]');
     await page.click('[data-test-id="fa-arrow"]');
     await page.goto('https://lumencitest.akvotest.org');
+    // It would be better to use a waitForSelector
     await sleep(1000);
     const dashboardExists = await page.$(`[data-test-name="Dashboard${datasetName}"]`) !== undefined;
     assert.ok(dashboardExists, 'Failure in dashboard creation.');
@@ -441,6 +451,8 @@ let aggregationId;
     console.log('Typing dataset location...');
     await page.type('[data-test-id="flow-url"]', 'uat1/akvoflow.org');
     console.log('Selecting data...');
+    // These sleeps should be improved with while loops,
+    // trying to access the comboboxes and using timeouts
     await sleep(5000);
     await page.type('[data-test-id="flow-url"]+div [role="combobox"]', '_Lumen tests');
     await page.keyboard.press('Enter');

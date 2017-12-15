@@ -192,6 +192,8 @@ let aggregationId;
       return Promise.resolve(found.id);
     });
     await page.click(`#${optionId}`);
+    // These sleeps should be improved with while loops,
+    // trying to access the selectors and using timeouts
     await sleep(2000);
     await page.waitForSelector('label[data-test-id="categoryColumnInput"]+div', { timeout: selectorTimeout });
     await page.click('label[data-test-id="categoryColumnInput"]+div');
@@ -231,6 +233,8 @@ let aggregationId;
       return Promise.resolve(found.id);
     });
     await page.click(`#${optionId}`);
+    // These sleeps should be improved with while loops,
+    // trying to access the selectors and using timeouts
     await sleep(2000);
     await page.waitForSelector('label[data-test-id="metricColumnYInput"]+div', { timeout: selectorTimeout });
     await page.click('label[data-test-id="metricColumnYInput"]+div');
@@ -358,6 +362,8 @@ let aggregationId;
       return Promise.resolve(found.id);
     });
     await page.click(`#${optionId2}`);
+    // These sleeps should be improved with while loops,
+    // trying to access the selectors and using timeouts
     await sleep(2000);
     console.log('Dataset selected.');
     await page.waitForSelector('[data-test-id="color-coding-select"]', { timeout: selectorTimeout });
