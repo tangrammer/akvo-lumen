@@ -241,7 +241,9 @@ function deleteDatasetSuccess(id) {
       if (visualisations[visualisationId].visualisationType === 'map') {
         const viz = visualisations[visualisationId];
 
-        if (viz.spec && viz.spec.layers && viz.spec.layers.some(layer => layer.datasetId === id)) {
+        if (viz.spec && viz.spec.layers && viz.spec.layers.some(
+          layer => Boolean(layer.datasetId === id || layer.aggregationDataset === id)
+          )) {
           dispatch(visualisationActions.removeVisualisation(visualisationId));
         }
       }

@@ -25,7 +25,9 @@ function VisualisationsList({ datasetId, visualisations }) {
       }
       if (vis.visualisationType === 'map'
         && vis.spec && vis.spec.layers
-        && vis.spec.layers.some(layer => layer.datasetId === datasetId)) {
+        && vis.spec.layers.some(
+          layer => Boolean(layer.datasetId === datasetId || layer.aggregationDataset === datasetId)
+        )) {
         return true;
       }
       return false;
