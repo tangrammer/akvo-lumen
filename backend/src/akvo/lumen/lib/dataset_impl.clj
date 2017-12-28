@@ -3,13 +3,13 @@
   (:require [akvo.lumen.endpoint.job-execution :as job-execution]
             [akvo.lumen.import :as import]
             [akvo.lumen.lib :as lib]
+            [akvo.lumen.lib.visualisation-impl :as vis-imp]
             [akvo.lumen.update :as update]
             [clojure.java.jdbc :as jdbc]
             [clojure.string :as str]
             [hugsql.core :as hugsql]))
 
 (hugsql/def-db-fns "akvo/lumen/lib/dataset.sql")
-(hugsql/def-db-fns "akvo/lumen/lib/visualisation.sql")
 (hugsql/def-db-fns "akvo/lumen/job-execution.sql")
 
 (defn all [tenant-conn]
@@ -67,7 +67,11 @@
       (do
         (delete-failed-job-execution-by-id tenant-conn {:id id})
         (lib/not-found {:error "Not found"}))
-      (let [v (delete-maps-by-dataset-id tenant-conn {:id id})](lib/ok {:id id})))))
+
+
+      (let [v (vis-imp/delete-maps-by-dataset-id tenant-conn id)](lib/ok {:id id}))
+
+      )))
 
 (defn update [tenant-conn config dataset-id {refresh-token "refreshToken"}]
   (if-let [{data-source-spec :spec

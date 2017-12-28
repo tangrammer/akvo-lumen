@@ -52,3 +52,23 @@
   (if (zero? (delete-visualisation-by-id tenant-conn {:id id}))
     (lib/not-found {:error "Not found"})
     (lib/ok {:id id})))
+
+(defn test-map-for-dataset-id [tenant-conn viz dataset-id]
+  (if (some
+        (fn [layer]
+          (or
+            (= (get layer "datasetId") dataset-id)
+            (= (get layer "aggregationDataset") dataset-id)
+          )
+        )
+        (get-in viz [:spec "layers"])
+      )
+      (delete tenant-conn (get viz :id))
+  )
+)
+
+(defn delete-maps-by-dataset-id [tenant-conn dataset-id]
+  (let [all (all-visualisations tenant-conn)]
+    (doseq [x all] (test-map-for-dataset-id tenant-conn x dataset-id))
+  )
+)
