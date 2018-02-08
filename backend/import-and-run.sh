@@ -2,6 +2,9 @@
 
 set -e
 
+ls -lrt /home/akvo || echo "No /home/akvo here"
+ls -lrt /home/akvo/.m2 || echo "No maven repo hereº"
+
 CERT_INSTALLED=$((keytool -list -trustcacerts -keystore "${JAVA_HOME}/jre/lib/security/cacerts" -storepass changeit | grep postgrescert) || echo "not found")
 
 if [ "${CERT_INSTALLED}" = "not found" ]; then

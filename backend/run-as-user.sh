@@ -2,6 +2,9 @@
 
 set -eu
 
+ls -lrt /home/akvo || echo "No /home/akvo"
+ls -lrt /home/akvo/.m2 || echo "No maven repo"
+
 USER_EXISTS=$(awk -F ':' '$3 ~ /^'${HOST_UID}'$/' /etc/passwd)
 GROUP_EXISTS=$(awk -F ':' '$3 ~ /^'${HOST_GID}'$/' /etc/group)
 
