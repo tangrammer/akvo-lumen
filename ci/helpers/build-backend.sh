@@ -9,7 +9,7 @@ function log {
 log Bulding container to run the backend tests
 docker build --rm=false -t akvo-lumen-backend-dev:develop backend -f backend/Dockerfile-dev
 log Running Backend unit tests and building uberjar
-ls -lrt $HOME/.m2
+ls -lrt $HOME/.m2 || echo "No maven dir????"
 docker run --env-file=.env -v "$HOME/.m2:/home/akvo/.m2" -v "$(pwd)/backend:/app" akvo-lumen-backend-dev:develop /app/run-as-user.sh lein "do" test, uberjar
 
 cp backend/target/uberjar/akvo-lumen.jar backend
