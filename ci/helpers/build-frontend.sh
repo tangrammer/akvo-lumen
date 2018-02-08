@@ -14,3 +14,4 @@ docker run --env-file=.env -v "$(pwd)/client:/lumen" --rm=false -t akvo-lumen-cl
 log Creating Production Client image
 docker build --rm=false -t eu.gcr.io/${PROJECT_NAME}/lumen-client:${TRAVIS_COMMIT} ./client
 docker tag eu.gcr.io/${PROJECT_NAME}/lumen-client:${TRAVIS_COMMIT} eu.gcr.io/${PROJECT_NAME}/lumen-client:develop
+log Production Client image built

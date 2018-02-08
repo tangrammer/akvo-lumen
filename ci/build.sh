@@ -32,11 +32,25 @@ docker-compose -p akvo-lumen-ci -f docker-compose.yml -f docker-compose.ci.yml u
 
 bash ci/helpers/wait-for-docker-compose-to-start.sh
 
+{
 log Running Backend functional tests
-docker-compose -p akvo-lumen-ci -f docker-compose.yml -f docker-compose.ci.yml run --no-deps backend-functional-tests /app/import-and-run.sh functional-and-seed
+docker-compose -p akvo-lumen-ci -f docker-compose.yml -f docker-compose.ci.yml run --no-deps backend-functional-tests /app/import-and-run.sh functional-and-see
+log Done Backend functional tests
+} &> functional.build.log &
+FUNCTIONAL_TEST_PROCESS=$!
 
 log Running the end to end tests against local Docker Compose Environment
 ./ci/e2e-test.sh script-test akvolumenci http://t1.lumen.local/
+log Done the end to end tests against local Docker Compose Environment
+
+wait ${FUNCTIONAL_TEST_PROCESS}
+FUNCTIONAL_TEST_PROCESS=$?
+cat functional.build.log
+
+if [ ${FUNCTIONAL_TEST_PROCESS} -ne 0 ]; then
+    exit ${FUNCTIONAL_TEST_PROCESS}
+fi
+
 
 log Done
 #docker-compose -p akvo-lumen-ci -f docker-compose.yml -f docker-compose.ci.yml down
