@@ -24,7 +24,10 @@ gcloud config set container/cluster europe-west1-d
 gcloud config set compute/zone europe-west1-d
 gcloud config set container/use_client_certificate True
 
-docker login -u _json_key -p "$(cat ci/gcloud-service-account.json)" https://gcr.io
+gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-maps:${TRAVIS_COMMIT}
+gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-client:${TRAVIS_COMMIT}
+gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-backend:${TRAVIS_COMMIT}
+gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-backend-dev:${TRAVIS_COMMIT}
 
 log Starting Docker Compose environment
 docker-compose -p akvo-lumen-ci -f docker-compose.yml -f docker-compose.ci.yml up --no-color -d --build
