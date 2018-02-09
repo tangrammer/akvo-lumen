@@ -24,6 +24,8 @@ gcloud config set container/cluster europe-west1-d
 gcloud config set compute/zone europe-west1-d
 gcloud config set container/use_client_certificate True
 
+docker login -u _json_key -p "$(cat ci/gcloud-service-account.json)" https://gcr.io
+
 log Starting Docker Compose environment
 docker-compose -p akvo-lumen-ci -f docker-compose.yml -f docker-compose.ci.yml up --no-color -d --build
 
