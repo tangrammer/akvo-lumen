@@ -35,3 +35,4 @@ gcloud container clusters get-credentials test
 
 log Pushing images
 gcloud docker -- push eu.gcr.io/${PROJECT_NAME}/lumen-client
+log Pushing images done

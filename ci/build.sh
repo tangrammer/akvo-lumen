@@ -24,6 +24,7 @@ gcloud config set container/cluster europe-west1-d
 gcloud config set compute/zone europe-west1-d
 gcloud config set container/use_client_certificate True
 
+log Pulling images
 gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-maps:${TRAVIS_COMMIT}
 gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-client:${TRAVIS_COMMIT}
 gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-backend:${TRAVIS_COMMIT}

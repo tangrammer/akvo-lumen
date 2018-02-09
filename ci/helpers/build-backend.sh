@@ -43,3 +43,4 @@ gcloud container clusters get-credentials test
 log Pushing images
 gcloud docker -- push eu.gcr.io/${PROJECT_NAME}/lumen-backend
 gcloud docker -- push eu.gcr.io/${PROJECT_NAME}/lumen-backend-dev
+log Pushing images done

@@ -33,5 +33,6 @@ gcloud container clusters get-credentials test
 
 log Pushing images
 gcloud docker -- push eu.gcr.io/${PROJECT_NAME}/lumen-maps
+log Pushing images done
 
 #docker-compose -p akvo-lumen-ci -f docker-compose.yml -f docker-compose.ci.yml down
