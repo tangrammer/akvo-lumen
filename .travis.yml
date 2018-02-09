@@ -30,7 +30,7 @@ jobs:
   include:
     - stage: build-images
       script: ./ci/helpers/build-backend.sh
-      script: ./ci/helpers/build-frontend.sh
-      script: ./ci/helpers/build-windshaft.sh
+    - script: ./ci/helpers/build-frontend.sh
+    - script: ./ci/helpers/build-windshaft.sh
     - stage: test-images
       script: "./ci/build.sh && ./ci/deploy.sh"
