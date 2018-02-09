@@ -11,21 +11,24 @@ if [ -z "$TRAVIS_COMMIT" ]; then
     export TRAVIS_COMMIT=local
 fi
 
-./ci/helpers/build-backend.sh &> backend.build.log &
-BACKEND_PROCESS=$!
-./ci/helpers/build-frontend.sh
+log Making sure gcloud and kubectl are installed and up to date
+gcloud components install kubectl
+gcloud components update
+gcloud version
+which gcloud kubectl
 
-wait ${BACKEND_PROCESS}
-BACKEND_PROCESS_EXIT=$?
-cat backend.build.log
+log Authentication with gcloud and kubectl
+gcloud auth activate-service-account --key-file ci/gcloud-service-account.json
+gcloud config set project akvo-lumen
+gcloud config set container/cluster europe-west1-d
+gcloud config set compute/zone europe-west1-d
+gcloud config set container/use_client_certificate True
 
-if [ ${BACKEND_PROCESS_EXIT} -ne 0 ]; then
-    exit ${BACKEND_PROCESS_EXIT}
-fi
-
-log Creating Production Windshaft image
-docker build --rm=false -t eu.gcr.io/${PROJECT_NAME}/lumen-maps:${TRAVIS_COMMIT} ./windshaft
-docker tag eu.gcr.io/${PROJECT_NAME}/lumen-maps:${TRAVIS_COMMIT} eu.gcr.io/${PROJECT_NAME}/lumen-maps:develop
+log Pulling images
+gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-maps:${TRAVIS_COMMIT}
+gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-client:${TRAVIS_COMMIT}
+gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-backend:${TRAVIS_COMMIT}
+gcloud docker -- pull eu.gcr.io/${PROJECT_NAME}/lumen-backend-dev:${TRAVIS_COMMIT}
 
 log Starting Docker Compose environment
 docker-compose -p akvo-lumen-ci -f docker-compose.yml -f docker-compose.ci.yml up --no-color -d --build
