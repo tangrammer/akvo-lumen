@@ -11,22 +11,6 @@ if [ -z "$TRAVIS_COMMIT" ]; then
     export TRAVIS_COMMIT=local
 fi
 
-./ci/helpers/build-backend.sh &> backend.build.log &
-BACKEND_PROCESS=$!
-./ci/helpers/build-frontend.sh
-
-wait ${BACKEND_PROCESS}
-BACKEND_PROCESS_EXIT=$?
-cat backend.build.log
-
-if [ ${BACKEND_PROCESS_EXIT} -ne 0 ]; then
-    exit ${BACKEND_PROCESS_EXIT}
-fi
-
-log Creating Production Windshaft image
-docker build --rm=false -t eu.gcr.io/${PROJECT_NAME}/lumen-maps:${TRAVIS_COMMIT} ./windshaft
-docker tag eu.gcr.io/${PROJECT_NAME}/lumen-maps:${TRAVIS_COMMIT} eu.gcr.io/${PROJECT_NAME}/lumen-maps:develop
-
 log Starting Docker Compose environment
 docker-compose -p akvo-lumen-ci -f docker-compose.yml -f docker-compose.ci.yml up --no-color -d --build
 
