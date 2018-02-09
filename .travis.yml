@@ -7,6 +7,7 @@ cache:
   - "$HOME/.m2"
   - "$HOME/.lein"
   - "${HOME}/google-cloud-sdk"
+  - "$HOME/.npm"
 before_install:
 - openssl aes-256-cbc -K $encrypted_13abf95e958f_key -iv $encrypted_13abf95e958f_iv
   -in ci/gcloud-service-account.json.enc -out ci/gcloud-service-account.json -d
