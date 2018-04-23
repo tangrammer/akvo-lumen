@@ -16,6 +16,7 @@ spec:
         lumen-version: ${BUILD_HASH}
         app: lumen
         color: ${COLOR}
+        environment: ${ENVIRONMENT}
     spec:
       containers:
       - name: lumen-client
@@ -24,18 +25,22 @@ spec:
         - containerPort: 80
         resources:
           requests:
-            cpu: "50m"
+            cpu: ${CLIENT_POD_CPU_REQUESTS}
+            memory: ${CLIENT_POD_MEM_REQUESTS}
           limits:
-            cpu: "1000m"
+            cpu: ${CLIENT_POD_CPU_LIMITS}
+            memory: ${CLIENT_POD_MEM_LIMITS}
       - name: lumen-maps
         image: eu.gcr.io/akvo-lumen/lumen-maps:${BUILD_HASH}
         ports:
         - containerPort: 4000
         resources:
           requests:
-            cpu: "50m"
+            cpu: ${MAPS_POD_CPU_REQUESTS}
+            memory: ${MAPS_POD_MEM_REQUESTS}
           limits:
-            cpu: "1000m"
+            cpu: ${MAPS_POD_CPU_LIMITS}
+            memory: ${MAPS_POD_MEM_LIMITS}
         env:
         - name: LUMEN_ENCRYPTION_KEY
           valueFrom:
@@ -48,9 +53,11 @@ spec:
         - containerPort: 3000
         resources:
           requests:
-            cpu: "50m"
+            cpu: ${BACKEND_POD_CPU_REQUESTS}
+            memory: ${BACKEND_POD_MEM_REQUESTS}
           limits:
-            cpu: "1000m"
+            cpu: ${BACKEND_POD_CPU_LIMITS}
+            memory: ${BACKEND_POD_MEM_LIMITS}
         env:
         - name: LUMEN_DB_URL
           valueFrom:
