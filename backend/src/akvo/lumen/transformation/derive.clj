@@ -52,7 +52,7 @@
 (def max-items-to-process 8000)
 
 (defn set-cells-values! [conn opts data]
-  (pmap #(set-cells-values conn (merge {:params %} opts)) (partition-all max-items-to-process data)))
+  (doall (pmap #(set-cells-values conn (merge {:params %} opts)) (partition-all max-items-to-process data))))
 
 (defmethod engine/apply-operation :core/derive
   [tenant-conn table-name columns op-spec]
@@ -64,6 +64,8 @@
           row-fn                  (js-engine/row-transform-fn {:columns     columns
                                                                :code        code
                                                                :column-type column-type})
+
+          ;; TODO: think how to execute depending of error-strategy
           js-execution-seq        (->> (all-data conn {:table-name table-name})
                                        (map (fn [i]
                                               (try
