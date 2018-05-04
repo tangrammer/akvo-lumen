@@ -26,6 +26,22 @@
       (catch Exception e
         (.printStackTrace (.getCause e))))))
 
+(deftest ^:functional test-reproduce-sentry-issue-543446125
+  ;; https://sentry.io/akvo-foundation/production/issues/543446125/
+  (testing "exception is thrown with one row dataset and :has-column-headers? true :guess-column-types? true"
+    (try
+      (import-file *tenant-conn* *error-tracker* "one-row.csv" {:dataset-name "DOS data" :has-column-headers? true :guess-column-types? true})
+        (throw (ex-info "we should receive the other exception :) " {}))      
+      (catch Exception e
+        (is (= java.lang.IllegalArgumentException (class e))))))
+
+  (testing "exception isn't thrown with two rows dataset and :has-column-headers? true :guess-column-types? true"
+    (try
+      (import-file *tenant-conn* *error-tracker* "two-rows.csv" {:dataset-name "DOS data" :has-column-headers? true :guess-column-types? true})
+      (catch Exception e
+        (throw (ex-info "we shouldn't receive exceptions with 2 rows :) " {}))))))
+
+
 (deftest ^:functional test-mixed-columns
   (testing "Import of mixed-type data"
     (let [dataset-id (import-file *tenant-conn* *error-tracker* "mixed-columns.csv" {:dataset-name "Mixed Columns"})

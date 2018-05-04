@@ -32,13 +32,16 @@
 
 (defn import-file
   "Import a file and return the dataset-id"
-  [tenant-conn error-tracker file {:keys [dataset-name has-column-headers?]}]
+  [tenant-conn error-tracker file {:keys [dataset-name has-column-headers? guess-column-types?]}]
   (let [data-source-id (str (squuid))
         job-id (str (squuid))
         data-source-spec {"name" (or dataset-name file)
                           "source" {"path" (.getAbsolutePath (io/file (io/resource file)))
                                     "kind" "DATA_FILE"
                                     "fileName" (or dataset-name file)
+                                    "guessColumnTypes" (if (some? guess-column-types?)
+                                                         (boolean guess-column-types?)
+                                                         true)
                                     "hasColumnHeaders" (boolean has-column-headers?)}}]
     (insert-data-source tenant-conn {:id data-source-id :spec data-source-spec})
     (insert-job-execution tenant-conn {:id job-id :data-source-id data-source-id})
