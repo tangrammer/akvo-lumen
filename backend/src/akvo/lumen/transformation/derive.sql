@@ -29,3 +29,7 @@ WHERE rnum=c.ref_num;
 -- :name delete-row :!
 -- :doc Delete a row
 DELETE FROM :i:table-name WHERE rnum=:rnum
+
+-- :name delete-rows :!
+-- :doc Delete multiple rows
+DELETE FROM :i:table-name WHERE rnum IN (:v*:rnums)

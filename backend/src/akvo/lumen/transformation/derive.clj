@@ -42,9 +42,8 @@
   (set-cells-value conn (merge opts {:params data})))
 
 (defn delete-rows! [conn opts data]
-  (->> data
-       (map (fn [[i]] (delete-row conn (merge {:rnum i} opts))))
-       doall))
+  (when (not-empty data)
+    (delete-rows conn (merge opts {:rnums (mapv first data)}))))
 
 (defmethod engine/apply-operation :core/derive
   [tenant-conn table-name columns op-spec]
