@@ -8,7 +8,6 @@
 
 (hugsql/def-db-fns "akvo/lumen/transformation/derive.sql")
 (hugsql/def-db-fns "akvo/lumen/transformation/engine.sql")
-
 (defn lumen->pg-type [type]
   (condp = type
     "text"   "text"
@@ -60,6 +59,7 @@
           js-execution-seq        (->> (all-data conn {:table-name table-name})
                                        (map (fn [i]
                                               (try
+                                                ;; Streams with results filtered
                                                 [(:rnum i) :set-value! (row-fn i)]
                                                 (catch Exception e
                                                   (condp = (engine/error-strategy op-spec)

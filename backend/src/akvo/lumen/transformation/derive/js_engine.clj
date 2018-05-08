@@ -74,26 +74,34 @@
 (defn- invoke* [^Invocable engine ^String fun & args]
   (.invokeFunction engine fun (object-array args)))
 
+(defn- invocation
+  ([engine fun]
+   (invocation engine fun nil))
+  ([engine fun type*]
+   (fn [& args]
+     (let [res (apply invoke* engine fun args)]
+       (if (some? type*)
+         (valid-type? res type*)
+         res)))))
+
 (defn row-transform-fn
   [{:keys [columns code column-type]}]
   (let [adapter (column-name->column-title columns)
         engine (js-engine)
-        fun-name "deriveColumn"]
+        fun-name "deriveColumn"
+        typed-invocation (invocation engine fun-name column-type)]
     (eval* engine (column-function fun-name code))
     (fn [row]
-      (let [res (->> row
-                     (adapter)
-                     (invoke* engine fun-name))]
-        (if (some? column-type)
-          (valid-type? res column-type)
-          res)))))
+      (->> row
+           (adapter)
+           (typed-invocation)))))
 
 (defn evaluable? [code]
   (and (not (str/includes? code "function"))
        (not (str/includes? code "=>"))
        (let [try-code (column-function "try_js_sintax" code)]
          (try
-           (eval* (js-engine) try-code)
+           (eval* (js-engine) try-code) ;; invoke with sample row?
            true
            ;; Catches syntax errors
            (catch Exception e
