@@ -109,14 +109,18 @@
              (log/warn :not-valid-js try-code)
              false)))))
 
-(defn execute! [data opts [success-stream fail-stream]]
+(defn execute! [data opts]
   (let [row-fn (row-transform-fn opts)
-        data-stream (m.s/->source data)]
-    (->> data-stream
-         (m.s/map
-          (fn [i]
-            (try
-              (log/warn :info [(:rnum i) (row-fn i)])
-              (m.s/put! success-stream [(:rnum i) (row-fn i)])
-              (catch Exception e
-                (m.s/put! fail-stream [(:rnum i) e]))))))))
+        [success-stream fail-stream] [(m.s/stream) (m.s/stream)]
+        routing-fun (fn [i]
+                      (try
+                        (log/warn :info [(:rnum i) (row-fn i)])
+                        (m.s/put! success-stream [(:rnum i) (row-fn i)])
+                        (catch Exception e
+                          (m.s/put! fail-stream [(:rnum i) e]))))
+        data-stream (->> data m.s/->source (m.s/map routing-fun))]
+    ;; force consumption
+    (m.s/consume (fn [i] (println :execution-i i)) data-stream)
+    {:success-stream success-stream
+     :fail-stream fail-stream
+     :data-stream data-stream}))

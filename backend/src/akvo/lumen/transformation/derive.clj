@@ -25,9 +25,9 @@
 (def error-strategy #{"fail" "leave-empty" "delete-row"})
 
 #_(def reactive-actions {:success :set-value!
-                       :leave-empty false
-                       :delete-row true
-                       :fail :ss})
+                         :leave-empty false
+                         :delete-row true
+                         :fail :ss})
 
 (defmethod engine/valid? :core/derive
   [op-spec]
@@ -40,14 +40,28 @@
          (js-engine/evaluable? code))))
 
 #_(defn set-cells-values! [conn opts data]
-  (->> data
-       (map (fn [[i v]] (set-cell-value conn (merge {:value v :rnum i} opts))))
-       doall))
+    (->> data
+         (map (fn [[i v]] (set-cell-value conn (merge {:value v :rnum i} opts))))
+         doall))
 
 #_(defn delete-rows! [conn opts data]
-  (->> data
-       (map (fn [[i]] (delete-row conn (merge {:rnum i} opts))))
-       doall))
+    (->> data
+         (map (fn [[i]] (delete-row conn (merge {:rnum i} opts))))
+         doall))
+
+(defn error-handling [op-spec conn base-opts throw-error-fn]
+  (condp = (engine/error-strategy op-spec)
+    "leave-empty" (fn [[i e :as o]]
+                    (println :ex-leave-empty (.getMessage e))
+                    (set-cell-value conn (merge {:value nil :rnum i} base-opts)))
+
+    "delete-row" (fn [[i e :as o]]
+                   (println :ex-delete-row (.getMessage e))
+                   (delete-row conn (merge {:rnum i} base-opts)))
+
+    "fail" (fn [[i e :as o]]
+             (println :ex-fail-row (.getMessage e))
+             (throw-error-fn e))))
 
 (defmethod engine/apply-operation :core/derive
   [tenant-conn table-name columns op-spec]
@@ -55,70 +69,41 @@
     (let [{:keys [::code
                   ::column-title
                   ::column-type]} (args op-spec)
+
           new-column-name         (engine/next-column-name columns)
-
-          [success-stream fail-stream]   [(m.s/stream) (m.s/stream)]
-
-          execution-stream  (js-engine/execute!
-                             (all-data conn {:table-name table-name})
-                             {:columns     columns
-                              :code        code
-                              :column-type column-type}
-                             [success-stream fail-stream])
+          
+          execution (js-engine/execute! (all-data conn {:table-name table-name})
+                                        {:columns     columns
+                                         :code        code
+                                         :column-type column-type})
           
           base-opts        {:table-name  table-name
                             :column-name new-column-name}
+
           res-error (m.d/deferred)]
 
       (add-column conn {:table-name      table-name
                         :column-type     (lumen->pg-type column-type)
                         :new-column-name new-column-name})
-      (m.s/consume  (fn [i]
-                      (println :execution-i i))
-                    execution-stream)
 
-      (m.s/consume  (fn [[i v :as o] ]
-                      (println :execution-success o)
-                      (set-cell-value conn (merge {:value v :rnum i} base-opts)))
-                    success-stream)
+      (-> (fn [[i v :as o] ]
+            (println :execution-success o)
+            (set-cell-value conn (merge {:value v :rnum i} base-opts)))
+          (m.s/consume  
+        (:success-stream execution)))
+
+      (-> (error-handling op-spec conn base-opts (fn [e]
+                                                   (m.s/close! (:data-stream execution))
+                                                   (m.d/error! res-error e)))
+          (m.s/consume (:fail-stream execution)))
       
-      (condp = (engine/error-strategy op-spec)
-        "leave-empty" (m.s/consume
-                       (fn [[i e :as o]]
-                         (println :ex-leave-empty (.getMessage e))
-                         (set-cell-value conn (merge {:value nil :rnum i} base-opts)))
-                       fail-stream)
-        "delete-row"  (m.s/consume
-                       (fn [[i e :as o]]
-                         (println :ex-delete-row (.getMessage e))
-                         (delete-row conn (merge {:rnum i} base-opts)))
-                       fail-stream)
-        "fail"        (m.s/consume
-                       (fn [[i e :as o]]
-                         (println :ex-fail-row (.getMessage e))
-                         (m.s/close! execution-stream)
-                         (m.d/error! res-error e))
-                       fail-stream))
-      (when (m.d/realized? res-error) (throw @res-error))
-      {:success?      true
-       :execution-log [(format "Derived columns using '%s'" code)]
-       :columns       (conj columns {"title"      column-title
-                                     "type"       column-type
-                                     "sort"       nil
-                                     "hidden"     false
-                                     "direction"  nil
-                                     "columnName" new-column-name})})))
-
-
-(comment
-  (def x1 (->> (m.s/->source [])
-               (m.s/map (fn [i] (str "I: " i)))))
-  (do
-    (m.s/consume (fn [i] (println i)) x1 ))
-
-  (def hola (m.d/deferred ))
-  (m.d/error! hola "hot")
-  (m.d/realized? hola)
-  (m.s/drained? x1)
-  
-  )
+      (if (m.d/realized? res-error)
+        (throw @res-error)
+        {:success?      true
+         :execution-log [(format "Derived columns using '%s'" code)]
+         :columns       (conj columns {"title"      column-title
+                                       "type"       column-type
+                                       "sort"       nil
+                                       "hidden"     false
+                                       "direction"  nil
+                                       "columnName" new-column-name})}))))
