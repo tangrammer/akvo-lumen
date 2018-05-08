@@ -10,6 +10,7 @@
             [akvo.lumen.transformation.engine :as engine]
             [cheshire.core :as json]
             [clojure.java.io :as io]
+            [clojure.tools.logging :as log]
             [clojure.test :refer :all]
             [hugsql.core :as hugsql]))
 

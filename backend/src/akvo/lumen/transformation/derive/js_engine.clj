@@ -3,6 +3,7 @@
             [clojure.java.jdbc :as jdbc]
             [clojure.set :as set]
             [clojure.spec.alpha :as s]
+            [manifold.stream :as m.s]
             [clojure.string :as str]
             [clojure.tools.logging :as log])
   (:import [javax.script ScriptEngineManager ScriptEngine Invocable ScriptContext Bindings]
@@ -84,7 +85,7 @@
          (valid-type? res type*)
          res)))))
 
-(defn row-transform-fn
+(defn- row-transform-fn
   [{:keys [columns code column-type]}]
   (let [adapter (column-name->column-title columns)
         engine (js-engine)
@@ -107,3 +108,15 @@
            (catch Exception e
              (log/warn :not-valid-js try-code)
              false)))))
+
+(defn execute! [data opts [success-stream fail-stream]]
+  (let [row-fn (row-transform-fn opts)
+        data-stream (m.s/->source data)]
+    (->> data-stream
+         (m.s/map
+          (fn [i]
+            (try
+              (log/warn :info [(:rnum i) (row-fn i)])
+              (m.s/put! success-stream [(:rnum i) (row-fn i)])
+              (catch Exception e
+                (m.s/put! fail-stream [(:rnum i) e]))))))))
