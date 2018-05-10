@@ -48,34 +48,46 @@
 (defmethod engine/apply-operation :core/derive
   [tenant-conn table-name columns op-spec]
   (jdbc/with-db-transaction [conn tenant-conn]
-    (let [{:keys [::code
-                  ::column-title
-                  ::column-type]} (args op-spec)
-          new-column-name         (engine/next-column-name columns)
-          row-fn                  (js-engine/row-transform-fn {:columns     columns
-                                                               :code        code
-                                                               :column-type column-type})
-          js-execution-seq        (->> (all-data conn {:table-name table-name})
-                                       (map (fn [i]
-                                              (try
-                                                [(:rnum i) :set-value! (row-fn i)]
-                                                (catch Exception e
-                                                  (condp = (engine/error-strategy op-spec)
-                                                    "leave-empty" [(:rnum i) :set-value! nil]
-                                                    "delete-row"  [(:rnum i) :delete-row!]
-                                                    "fail"        (throw e) ;; interrupt js execution
-                                                    ))))))
-          base-opts               {:table-name  table-name
-                                   :column-name new-column-name
-                                   :column-type (lumen->pg-type column-type)}]
-      (add-column conn (merge base-opts {:new-column-name new-column-name}))
-      (set-cells-values! conn base-opts (js-execution>sql-params js-execution-seq :set-value!))
-      (delete-rows! conn base-opts (js-execution>sql-params js-execution-seq :delete-row!))      
-      {:success?      true
-       :execution-log [(format "Derived columns using '%s'" code)]
-       :columns       (conj columns {"title"      column-title
-                                     "type"       column-type
-                                     "sort"       nil
-                                     "hidden"     false
-                                     "direction"  nil
-                                     "columnName" new-column-name})})))
+    (time* :derive
+           (let [{:keys [::code
+                         ::column-title
+                         ::column-type]} (args op-spec)
+                 new-column-name         (engine/next-column-name columns)
+                 row-fn                   (time* :row-transform-fn
+                                                      (js-engine/row-transform-fn {:columns     columns
+                                                                                   :code        code
+                                                                                   :column-type column-type}))
+                 data (time* :all-data (all-data conn {:table-name table-name}))
+                 js-execution-seq        (time* :js-execution-seq
+                                                (->> data
+                                                     (map (fn [i]
+                                                            (try
+                                                              [(:rnum i) :set-value! (row-fn i)]
+                                                              (catch Exception e
+                                                                (condp = (engine/error-strategy op-spec)
+                                                                  "leave-empty" [(:rnum i) :set-value! nil]
+                                                                  "delete-row"  [(:rnum i) :delete-row!]
+                                                                  ;; interrupt js execution
+                                                                  "fail"        (throw e))))))
+             ;;                                        doall
+                                                     ))
+                 base-opts               {:table-name  table-name
+                                          :column-name new-column-name
+                                          :column-type (lumen->pg-type column-type)}]
+             (time* :add-column
+                    (add-column conn (merge base-opts {:new-column-name new-column-name})))
+
+             (time* :set-db-values
+                    (doall (map #(do
+                                   (set-cells-values! conn base-opts (js-execution>sql-params  % :set-value!))
+                                   (delete-rows! conn base-opts (js-execution>sql-params % :delete-row!)))
+                                (partition 1000 js-execution-seq))))
+             
+             {:success?      true
+              :execution-log [(format "Derived columns using '%s'" code)]
+              :columns       (conj columns {"title"      column-title
+                                            "type"       column-type
+                                            "sort"       nil
+                                            "hidden"     false
+                                            "direction"  nil
+                                            "columnName" new-column-name})}))))
