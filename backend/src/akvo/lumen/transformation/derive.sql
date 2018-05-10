@@ -15,13 +15,20 @@ SET :i:column-name = c.derived_val:::i:column-type
 FROM (values
 /*~
 ;; we need to cover 3 types => dates, numbers and strings (and nil)
-(->> (:params params)
-     (map (fn [[i v]]
-            (format (cond
-                      (inst? v) "(%s, '%s')" 
-                      (string? v) "(%s, '%s')" 
-                      :else "(%s, %s)") i v)))
-     (string/join ","))
+(let[res (->> (:params params)
+              (map (fn [[i v]]
+                     (if (string? v)
+                       [i (string/replace  v #"'" "")] ;; TODO: WIP issue with \'
+                       [i v])))
+              (map (fn [[i v]]
+                     (format (cond
+                               (inst? v) "(%s, '%s')" 
+                               (string? v) "(%s, '%s')" 
+                               :else "(%s, %s)") i v)))
+              (string/join ","))]
+;;(println res)
+res
+)
 ~*/
 ) as c(ref_num, derived_val)
 WHERE rnum=c.ref_num;
