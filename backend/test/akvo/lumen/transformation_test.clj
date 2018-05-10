@@ -399,3 +399,39 @@
         (is (= 4 (count columns)))
         (is (= "geopoint" (get (last columns) "type")))
         (is (= "d1" (get (last columns) "columnName")))))))
+
+(deftest ^:functional big-dataset-100K-test
+  (let [dataset-id (import-file *tenant-conn* *error-tracker* "cities.csv" {:has-column-headers? true})
+        apply-transformation (partial tf/apply *tenant-conn* dataset-id)]
+
+    (testing "Import and initial transforms"
+      (is (= (take 3 (latest-data dataset-id [1 2 3]))
+             [{:rnum 1,
+               :c1 "New York ",
+               :c2 8287238.0,
+               :c3 40.7305991,
+               :c4 -73.9865812}
+              {:rnum 2,
+               :c1 "Los Angeles ",
+               :c2 3826423.0,
+               :c3 34.053717,
+               :c4 -118.2427266}
+              {:rnum 3,
+               :c1 "Chicago ",
+               :c2 2705627.0,
+               :c3 41.8755546,
+               :c4 -87.6244212}]
+             )))
+
+    (testing "Basic text transform"
+      (apply-transformation (derive-column-transform
+                             {"args" {"code" "row.name + ' - ' + row.pop"
+                                      "newColumnTitle" "Derived 1"
+                                      "newColumnType" "text"}
+                              "onError" "leave-empty"}))
+      (is (= ["New York  - 8287238"	    
+              "Los Angeles  - 3826423"
+              "Chicago  - 2705627"] 
+             (vec (take 3 (map :d1 (latest-data dataset-id [1 2 3])))))))
+
+))
