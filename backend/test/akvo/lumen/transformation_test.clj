@@ -27,7 +27,6 @@
 
 (use-fixtures :once tenant-conn-fixture error-tracker-fixture)
 
-
 (deftest op-validation
   (testing "op validation"
     (is (= true (every? true? (map engine/valid? ops))))
@@ -81,7 +80,6 @@
                                                                     :column-name "c4"
                                                                     :table-name table-name}))))
           (is (= 1 (:total (get-row-count *tenant-conn* {:table-name table-name})))))))))
-
 
 (deftest ^:functional test-undo
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "GDP.csv" {:dataset-name "GDP Undo Test"})
@@ -196,10 +194,18 @@
      :transformation (merge default-transform
                             (assoc transform "args" args))}))
 
-(defn latest-data [dataset-id]
-  (let [table-name (:table-name
-                    (latest-dataset-version-by-dataset-id *tenant-conn* {:dataset-id dataset-id}))]
-    (get-data *tenant-conn* {:table-name table-name})))
+(defn latest-data
+  ([dataset-id]
+   (latest-data dataset-id nil)
+   (let [table-name (:table-name
+                     (latest-dataset-version-by-dataset-id *tenant-conn* {:dataset-id dataset-id}))]
+     (get-data *tenant-conn* {:table-name table-name})))
+  ([dataset-id rnums]
+   (let [table-name (:table-name
+                     (latest-dataset-version-by-dataset-id *tenant-conn* {:dataset-id dataset-id}))]
+     (if rnums
+       (get-data-rnums *tenant-conn* {:table-name table-name :rnums rnums})
+       (get-data *tenant-conn* {:table-name table-name})))))
 
 (deftest ^:functional derived-column-test
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "derived-column.csv" {:has-column-headers? true})
