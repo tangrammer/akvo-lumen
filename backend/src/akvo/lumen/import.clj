@@ -80,8 +80,10 @@
           (let [columns (import/columns importer)]
             (import/create-dataset-table conn table-name columns)
             (import/add-key-constraints conn table-name columns)
-            (doseq [record (map import/coerce-to-sql (import/records importer))]
-              (jdbc/insert! conn table-name record))
+            (util/time* :iterate
+                        (doall  (map
+                                 (partial jdbc/insert-multi! conn table-name )
+                                 (partition-all 1000 (map import/coerce-to-sql (import/records importer))))))
             (successful-import conn job-execution-id table-name columns spec))))
       (catch Throwable e
         (failed-import conn job-execution-id (.getMessage e) table-name)
