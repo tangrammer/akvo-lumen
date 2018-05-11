@@ -400,8 +400,9 @@
         (is (= "geopoint" (get (last columns) "type")))
         (is (= "d1" (get (last columns) "columnName")))))))
 
-(deftest ^:functional big-dataset-100K-test
-  (let [dataset-id (import-file *tenant-conn* *error-tracker* "cities.csv" {:has-column-headers? true})
+
+(deftest ^:functional big-dataset-3K-test
+  (let [dataset-id (import-file *tenant-conn* *error-tracker* "2014_us_cities.csv" {:has-column-headers? true})
         apply-transformation (partial tf/apply *tenant-conn* dataset-id)]
 
     (testing "Import and initial transforms"

@@ -2,6 +2,9 @@
   (:require [akvo.lumen.transformation.derive.js-engine :as js-engine]
             [akvo.lumen.transformation.engine :as engine]
             [clj-time.coerce :as tc]
+            [manifold.stream :as m.s]
+            [manifold.bus :as m.b]
+            [manifold.deferred :as m.d]
             [akvo.lumen.util :refer (time*)]
             [clojure.java.jdbc :as jdbc]
             [clojure.tools.logging :as log]
@@ -32,18 +35,22 @@
          (#{"fail" "leave-empty" "delete-row"} (engine/error-strategy op-spec))
          (js-engine/evaluable? code))))
 
-(defn js-execution>sql-params [js-seq result-kw]
-  (->> js-seq
-       (filter (fn [[j r i]]
-                 (= r result-kw)))
-       (map (fn [[i _ v]] [i v]))))
+(defn error-handling [op-spec conn base-opts throw-error-fn]
+  (condp = (engine/error-strategy op-spec)
+    "leave-empty" (fn [[i e :as o]]
+                    (log/warn :ex-leave-empty (.getMessage e))
+                    (set-cell-value conn (merge {:value nil :rnum i} base-opts)))
+
+    "delete-row" (fn [[i e :as o]]
+                   (log/warn :ex-delete-row (.getMessage e))
+                   (delete-row conn (merge {:rnum i} base-opts)))
+
+    "fail" (fn [[i e :as o]]
+             (log/warn :ex-fail-row (.getMessage e))
+             (throw-error-fn e))))
 
 (defn set-cells-values! [conn opts data]
   (set-cells-value conn (merge opts {:params data})))
-
-(defn delete-rows! [conn opts data]
-  (when (not-empty data)
-    (delete-rows conn (merge opts {:rnums (mapv first data)}))))
 
 (defmethod engine/apply-operation :core/derive
   [tenant-conn table-name columns op-spec]
@@ -52,42 +59,51 @@
            (let [{:keys [::code
                          ::column-title
                          ::column-type]} (args op-spec)
-                 new-column-name         (engine/next-column-name columns)
-                 row-fn                   (time* :row-transform-fn
-                                                      (js-engine/row-transform-fn {:columns     columns
-                                                                                   :code        code
-                                                                                   :column-type column-type}))
-                 data (time* :all-data (all-data conn {:table-name table-name}))
-                 js-execution-seq        (time* :js-execution-seq
-                                                (->> data
-                                                     (map (fn [i]
-                                                            (try
-                                                              [(:rnum i) :set-value! (row-fn i)]
-                                                              (catch Exception e
-                                                                (condp = (engine/error-strategy op-spec)
-                                                                  "leave-empty" [(:rnum i) :set-value! nil]
-                                                                  "delete-row"  [(:rnum i) :delete-row!]
-                                                                  ;; interrupt js execution
-                                                                  "fail"        (throw e))))))
-             ;;                                        doall
-                                                     ))
-                 base-opts               {:table-name  table-name
-                                          :column-name new-column-name
-                                          :column-type (lumen->pg-type column-type)}]
+                 new-column-name (engine/next-column-name columns)
+
+                 data (all-data conn {:table-name table-name})
+                 sql-stream (m.s/buffered-stream 8000)
+                 [main-stream
+                  success-stream
+                  fail-stream] (js-engine/execute!
+                                data                                                 
+                                {:columns     columns
+                                 :code        code
+                                 :column-type column-type})
+                 base-opts     {:table-name  table-name
+                                :column-name new-column-name
+                                :column-type (lumen->pg-type column-type)}
+                 res-error (m.d/deferred)
+                 fail-fun (error-handling op-spec conn base-opts
+                                          (fn [e]
+                                            (log/error e)
+                                            (m.s/close! main-stream)
+                                            (m.d/error! res-error e)))]
              (time* :add-column
                     (add-column conn (merge base-opts {:new-column-name new-column-name})))
+             (time* :Set-vals
+                    @(m.d/let-flow [res-success (-> (fn [[i v :as o]]
+                                                      ;;               (log/warn :Rnum i)
+                                                      (let [d (m.s/description sql-stream)
+]
+                                                        (if (>= (d :buffer-size) (d :buffer-capacity))
+                                                          (->> (reduce (fn [c _]
+                                                                         (conj c @(m.s/take! sql-stream)))
+                                                                       [] (range (d :buffer-size)))
+                                                               (set-cells-values! conn base-opts))
+                                                          (m.s/put! sql-stream o))))
+                                            (m.s/consume success-stream))
 
-             (time* :set-db-values
-                    (doall (map #(do
-                                   (set-cells-values! conn base-opts (js-execution>sql-params  % :set-value!))
-                                   (delete-rows! conn base-opts (js-execution>sql-params % :delete-row!)))
-                                (partition 1000 js-execution-seq))))
-             
-             {:success?      true
-              :execution-log [(format "Derived columns using '%s'" code)]
-              :columns       (conj columns {"title"      column-title
-                                            "type"       column-type
-                                            "sort"       nil
-                                            "hidden"     false
-                                            "direction"  nil
-                                            "columnName" new-column-name})}))))
+                                    res-fail (m.s/consume fail-fun fail-stream)]
+
+                       [res-success res-fail]))
+             (if-not (m.d/realized? res-error)
+               {:success?      true
+                :execution-log [(format "Derived columns using '%s'" code)]
+                :columns       (conj columns {"title"      column-title
+                                              "type"       column-type
+                                              "sort"       nil
+                                              "hidden"     false
+                                              "direction"  nil
+                                              "columnName" new-column-name})}
+               @res-error)))))
