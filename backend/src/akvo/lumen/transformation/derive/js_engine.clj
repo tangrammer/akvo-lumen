@@ -43,7 +43,7 @@
 
 (defn ^NashornSandbox js-engine []
   (time* :js-engine
-         (let [maxmemory (* 1000 1024)
+         (let [maxmemory (* 2 1000 1024)
                maxtime 2000]
            (doto (NashornSandboxes/create)
              (.allowReadFunctions false)
@@ -114,24 +114,26 @@
 
 (defn execute! [data opts]
   (let [row-fn (row-transform-fn opts)
-        [success-stream fail-stream] [(m.s/buffered-stream 10000)(m.s/buffered-stream 10000)]
+        [success-stream fail-stream] [(m.s/buffered-stream 100000)(m.s/buffered-stream 100000)]
         routing-fun (fn [i]
                       (try
                         #_(log/warn :info [(:rnum i) (row-fn i)])
                         (m.s/try-put! success-stream [(:rnum i) (row-fn i)] 100)
                         #_(m.s/put! success-stream [(:rnum i) (row-fn i)])
                         (catch Exception e
-                          (m.s/try-put! fail-stream [(:rnum i) e] 100)
+                          (do
+                            (log/error :to-fail-stream (:rnum i) e)
+                           (m.s/try-put! fail-stream [(:rnum i) e] 100))
                           #_(m.s/put! fail-stream [(:rnum i) e])
                           )))
         data-stream (->> data m.s/->source (m.s/map routing-fun))]
     (future (try
-              (println "consuming main js stream in future" @(m.s/consume (fn [i] i) data-stream))
-              
-              (println "ending main js stream in future")
+              (log/info "consuming main js stream in future" )
+              @(m.s/consume (fn [i] i) data-stream)
+              (log/info "ending main js stream in future")
               (m.s/close! success-stream)
               (m.s/close! fail-stream)
-              (println "streams closed!")
+              (log/debug "streams closed!")
               (catch Exception e
                 (do
                   (log/error e "consuming stream exception!")

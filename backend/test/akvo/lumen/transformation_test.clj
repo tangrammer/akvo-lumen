@@ -227,7 +227,7 @@
                                         "newColumnTitle" "Derived 1"
                                         "newColumnType" "text"}
                                 "onError" "leave-empty"})))
-      (is (= ["A" "B" nil] (map :d1 (latest-data dataset-id)))))
+      (is (= #{"A" "B" nil} (set (map :d1 (latest-data dataset-id))))))
 
     (testing "Basic text transform with drop row on error"
       (with-no-logs
@@ -260,15 +260,14 @@
                                {"args" {"code" "row['foo'].toUpperCase()"
                                         "newColumnType" "text"
                                         "newColumnTitle" "Derived 4"}})))
-      (is (= ["A" "B" nil] (map :d2 (latest-data dataset-id))))
+      (is (= #{"A" "B" nil} (set (map :d2 (latest-data dataset-id)))))
 
       (with-no-logs
         (apply-transformation (derive-column-transform
                                {"args" {"code" "row['Derived 4'].toLowerCase()"
                                         "newColumnType" "text"
                                         "newColumnTitle" "Derived 5"}})))
-      (is (= ["a" "b" nil] (map :d3 (latest-data dataset-id)))))
-
+      (is (= #{"a" "b" nil} (set (map :d3 (latest-data dataset-id))))))
     (testing "Date transform"
       (let [[tag _] (apply-transformation (derive-column-transform
                                            {"args" {"code" "new Date()"
@@ -404,9 +403,9 @@
 (deftest ^:functional big-dataset-3K-test
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "2014_us_cities.csv" {:has-column-headers? true})
         apply-transformation (partial tf/apply *tenant-conn* dataset-id)]
-
+    (log/error :initial-rows (count (latest-data dataset-id )))
     (testing "Import and initial transforms"
-      (is (= (take 3 (latest-data dataset-id [1 2 3]))
+      (is (= (take 6 (latest-data dataset-id [1 2 3 1001 1002 1003]))
              [{:rnum 1,
                :c1 "New York ",
                :c2 8287238.0,
@@ -421,7 +420,22 @@
                :c1 "Chicago ",
                :c2 2705627.0,
                :c3 41.8755546,
-               :c4 -87.6244212}]
+               :c4 -87.6244212}
+              {:rnum 1001,
+               :c1 "Bangor ",
+               :c2 32962.0,
+               :c3 44.8011821,
+               :c4 -68.7778138}
+              {:rnum 1002,
+               :c1 "Danville ",
+               :c2 32903.0,
+               :c3 40.125222,
+               :c4 -87.6304614}
+              {:rnum 1003,
+               :c1 "Riviera Beach ",
+               :c2 32807.0,
+               :c3 26.7753405,
+               :c4 -80.0580969}]
              )))
 
     (testing "Basic text transform"
@@ -430,9 +444,12 @@
                                       "newColumnTitle" "Derived 1"
                                       "newColumnType" "text"}
                               "onError" "leave-empty"}))
-      (is (= ["New York  - 8287238"	    
+      (is (= ["New York  - 8287238"	  
               "Los Angeles  - 3826423"
-              "Chicago  - 2705627"] 
-             (vec (take 3 (map :d1 (latest-data dataset-id [1 2 3])))))))
+              "Chicago  - 2705627"
+              "Bangor  - 32962"
+              "Danville  - 32903"
+              "Riviera Beach  - 32807"] 
+             (vec (take 6 (map :d1 (latest-data dataset-id [1 2 3 1001 1002 1003])))))))
 
 ))

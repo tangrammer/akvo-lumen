@@ -50,6 +50,7 @@
              (throw-error-fn e))))
 
 (defn set-cells-values! [conn opts data]
+  (log/debug :set-cells-values! :data data)
   (set-cells-value conn (merge opts {:params data})))
 
 (defmethod engine/apply-operation :core/derive
@@ -62,7 +63,7 @@
                  new-column-name (engine/next-column-name columns)
 
                  data (all-data conn {:table-name table-name})
-                 sql-stream (m.s/buffered-stream 8000)
+                 sql-stream (m.s/stream 1000)
                  [main-stream
                   success-stream
                   fail-stream] (js-engine/execute!
@@ -74,6 +75,7 @@
                                 :column-name new-column-name
                                 :column-type (lumen->pg-type column-type)}
                  res-error (m.d/deferred)
+                 idx (atom 0)
                  fail-fun (error-handling op-spec conn base-opts
                                           (fn [e]
                                             (log/error e)
@@ -84,19 +86,27 @@
              (time* :Set-vals
                     @(m.d/let-flow [res-success (-> (fn [[i v :as o]]
                                                       ;;               (log/warn :Rnum i)
-                                                      (let [d (m.s/description sql-stream)
-]
-                                                        (if (>= (d :buffer-size) (d :buffer-capacity))
+                                                      (m.s/put! sql-stream o)
+                                                      (let [d (m.s/description sql-stream)]
+                                                        (when (or (>= (d :buffer-size) (d :buffer-capacity)) )
                                                           (->> (reduce (fn [c _]
+                                                                         (swap! idx inc)
                                                                          (conj c @(m.s/take! sql-stream)))
                                                                        [] (range (d :buffer-size)))
-                                                               (set-cells-values! conn base-opts))
-                                                          (m.s/put! sql-stream o))))
-                                            (m.s/consume success-stream))
+                                                               (set-cells-values! conn base-opts)))))
+                                                    (m.s/consume success-stream))
 
-                                    res-fail (m.s/consume fail-fun fail-stream)]
 
-                       [res-success res-fail]))
+                                    res-fail (m.s/consume fail-fun fail-stream)
+                                    ]
+                       (m.s/close! sql-stream)
+                       (let [c (atom [])]
+                         @(m.s/consume (fn [i]
+                                         (swap! idx inc)
+                                         (swap! c conj i)) sql-stream)
+                         (set-cells-values! conn base-opts @c))                       
+                       (log/info :res [res-success res-fail])))
+             (log/error :IDX @idx)
              (if-not (m.d/realized? res-error)
                {:success?      true
                 :execution-log [(format "Derived columns using '%s'" code)]
