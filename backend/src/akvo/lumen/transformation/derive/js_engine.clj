@@ -1,9 +1,6 @@
 (ns akvo.lumen.transformation.derive.js-engine
   (:require [clojure.set :as set]
             [clojure.string :as str]
-            [manifold.stream :as m.s]
-            [manifold.bus :as m.b]
-            [manifold.deferred :as m.d]
             [akvo.lumen.util :refer (time*)]
             [clojure.tools.logging :as log])
   (:import [java.util.concurrent Executors]
@@ -96,9 +93,16 @@
         typed-invocation (invocation engine fun-name column-type)]
     (eval* engine (column-function fun-name code))
     (fn [row]
-      (->> row
-           (adapter)
-           (typed-invocation)))))
+      (try
+        (let [v (->> row
+                     (adapter)
+                     (typed-invocation))]
+          (log/debug :row-fn-success [(:rnum row) v])
+          [:success (:rnum row) v ])
+        (catch Exception e
+          (do
+            (log/error :row-fn-fail (:rnum row) e)
+            [:fail (:rnum row) e]))))))
 
 (defn evaluable? [code]
   (and (not (str/includes? code "function"))
@@ -112,30 +116,5 @@
              (log/warn :not-valid-js try-code)
              false)))))
 
-(defn execute! [data opts]
-  (let [row-fn (row-transform-fn opts)
-        [success-stream fail-stream] [(m.s/buffered-stream 100000)(m.s/buffered-stream 100000)]
-        routing-fun (fn [i]
-                      (try
-                        #_(log/warn :info [(:rnum i) (row-fn i)])
-                        (m.s/try-put! success-stream [(:rnum i) (row-fn i)] 100)
-                        #_(m.s/put! success-stream [(:rnum i) (row-fn i)])
-                        (catch Exception e
-                          (do
-                            (log/error :to-fail-stream (:rnum i) e)
-                           (m.s/try-put! fail-stream [(:rnum i) e] 100))
-                          #_(m.s/put! fail-stream [(:rnum i) e])
-                          )))
-        data-stream (->> data m.s/->source (m.s/map routing-fun))]
-    (future (try
-              (log/info "consuming main js stream in future" )
-              @(m.s/consume (fn [i] i) data-stream)
-              (log/info "ending main js stream in future")
-              (m.s/close! success-stream)
-              (m.s/close! fail-stream)
-              (log/debug "streams closed!")
-              (catch Exception e
-                (do
-                  (log/error e "consuming stream exception!")
-                  (throw e)))))
-    [data-stream success-stream fail-stream]))
+(defn >fun [opts]
+  (row-transform-fn opts))

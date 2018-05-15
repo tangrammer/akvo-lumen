@@ -51,9 +51,11 @@
       (log/warn :error-strategy (engine/error-strategy op-spec) (.getMessage e))
       (error-strategy-cb o))
     (throw (ex-info (str "not valid error strategy!" (engine/error-strategy op-spec) {})))))
+(def idx (atom 0))
 
 (defn set-cells-values! [conn opts data-col]
-  (log/info :set-cells-values! :data (count data-col))
+  (log/info :set-cells-values! :data (swap! idx + (count data-col)))
+  
   (set-cells-value conn (merge opts {:params data-col})))
 
 (defn stop-stream-processing! [streams [rnum e :as data]]
@@ -77,32 +79,51 @@
                                           :column-type (lumen->pg-type column-type)}
                  _                       (time* :add-column
                                                 (add-column conn (merge opts {:new-column-name new-column-name})))
-                 data                    (all-data conn {:table-name table-name})]
+                 data                    (all-data conn {:table-name table-name})
+                 _  (do (reset! idx 0)
+                        (log/error :total-rows (count data)))
+                 main-stream (->> data m.s/->source)
+                 [success-stream fail-stream] [(m.s/buffered-stream 100000)(m.s/buffered-stream 100000)]
 
+                 main-stream-cb    (let [row-fn (js-engine/>fun
+                                                       {:columns     columns
+                                                        :code        code
+                                                        :column-type column-type})]
+                                     (fn [r]
+                                       (let [[res i v] (row-fn r)]
+                                         (if (= res :success)
+                                           (m.s/try-put! success-stream [i v] 100)
+                                           (m.s/try-put! fail-stream [i v] 100)))))
+
+                 
+                 stream-fail-cb    (-> {"leave-empty" (partial db-set-cell-nil! conn opts)
+                                        "delete-row"  (partial db-remove-row! conn opts)
+                                        "fail"        (partial stop-stream-processing!
+                                                               [main-stream success-stream fail-stream])}
+                                       (error-handling op-spec))
+
+                 stream-success-cb (partial set-cells-values! conn opts)
+
+                 _              (time*
+                                 :Set-vals
+                                 @(m.d/zip
+                                   (m.d/chain
+                                    (->> main-stream
+                                         (m.s/consume main-stream-cb))
+                                    (fn [e]
+                                      (m.s/close! success-stream)
+                                      (m.s/close! fail-stream))
+                                    )
+                                   (m.d/zip
+                                    (->> success-stream
+                                         (m.s/batch 8000 300)
+                                         (m.s/consume stream-success-cb))
+                                    (->> fail-stream
+                                         (m.s/consume stream-fail-cb)))))
+
+                 ]
              
-             (let [[main-stream
-                    success-stream
-                    fail-stream :as streams]        (js-engine/execute!
-                                                     data                                                 
-                                                     {:columns     columns
-                                                      :code        code
-                                                      :column-type column-type})
-
-                   stream-fail-cb    (-> {"leave-empty" (partial db-set-cell-nil! conn opts)
-                                          "delete-row"  (partial db-remove-row! conn opts)
-                                          "fail"        (partial stop-stream-processing! streams)}
-                                         (error-handling op-spec))
-
-                   stream-success-cb (partial set-cells-values! conn opts)
-                                
-                   ]
-               (time*
-                :Set-vals
-                @(m.d/zip (->> success-stream
-                               (m.s/batch 8000 300)
-                               (m.s/consume stream-success-cb))
-                          (->> fail-stream
-                               (m.s/consume stream-fail-cb)))))
+             (log/error :total-processed @idx)
 
              
              {:success?      true
