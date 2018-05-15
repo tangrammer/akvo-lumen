@@ -35,23 +35,34 @@
          (#{"fail" "leave-empty" "delete-row"} (engine/error-strategy op-spec))
          (js-engine/evaluable? code))))
 
-(defn error-handling [op-spec conn base-opts throw-error-fn]
-  (condp = (engine/error-strategy op-spec)
-    "leave-empty" (fn [[i e :as o]]
-                    (log/warn :ex-leave-empty (.getMessage e))
-                    (set-cell-value conn (merge {:value nil :rnum i} base-opts)))
+;; derive-actions
 
-    "delete-row" (fn [[i e :as o]]
-                   (log/warn :ex-delete-row (.getMessage e))
-                   (delete-row conn (merge {:rnum i} base-opts)))
+(defn db-set-cell-nil! [conn opts [rnum :as data]]
+  (log/debug :db-set-cell-nil! :data data) 
+  (set-cell-value conn (merge {:value nil :rnum rnum} opts)))
 
-    "fail" (fn [[i e :as o]]
-             (log/warn :ex-fail-row (.getMessage e))
-             (throw-error-fn e))))
+(defn db-remove-row! [conn opts [rnum :as data]]
+  (log/debug :db-remove-row! :data data)
+  (delete-row conn (merge {:rnum rnum} opts)))
 
-(defn set-cells-values! [conn opts data]
-  (log/debug :set-cells-values! :data data)
-  (set-cells-value conn (merge opts {:params data})))
+(defn error-handling [error-map-cbs op-spec]
+  (if-let [error-strategy-cb (get error-map-cbs (engine/error-strategy op-spec))]
+    (fn [[i e :as o]]
+      (log/warn :error-strategy (engine/error-strategy op-spec) (.getMessage e))
+      (error-strategy-cb o))
+    (throw (ex-info (str "not valid error strategy!" (engine/error-strategy op-spec) {})))))
+
+(defn set-cells-values! [conn opts data-col]
+  (log/info :set-cells-values! :data (count data-col))
+  (set-cells-value conn (merge opts {:params data-col})))
+
+(defn stop-stream-processing! [streams [rnum e :as data]]
+  (log/error e)
+  (doseq [s streams]
+   (m.s/close! s))
+  (throw e))
+
+;; end-derive-actions
 
 (defmethod engine/apply-operation :core/derive
   [tenant-conn table-name columns op-spec]
@@ -60,60 +71,45 @@
            (let [{:keys [::code
                          ::column-title
                          ::column-type]} (args op-spec)
-                 new-column-name (engine/next-column-name columns)
+                 new-column-name         (engine/next-column-name columns)
+                 opts                    {:table-name  table-name
+                                          :column-name new-column-name
+                                          :column-type (lumen->pg-type column-type)}
+                 _                       (time* :add-column
+                                                (add-column conn (merge opts {:new-column-name new-column-name})))
+                 data                    (all-data conn {:table-name table-name})]
 
-                 data (all-data conn {:table-name table-name})
-                 sql-stream (m.s/stream 1000)
-                 [main-stream
-                  success-stream
-                  fail-stream] (js-engine/execute!
-                                data                                                 
-                                {:columns     columns
-                                 :code        code
-                                 :column-type column-type})
-                 base-opts     {:table-name  table-name
-                                :column-name new-column-name
-                                :column-type (lumen->pg-type column-type)}
-                 res-error (m.d/deferred)
-                 idx (atom 0)
-                 fail-fun (error-handling op-spec conn base-opts
-                                          (fn [e]
-                                            (log/error e)
-                                            (m.s/close! main-stream)
-                                            (m.d/error! res-error e)))]
-             (time* :add-column
-                    (add-column conn (merge base-opts {:new-column-name new-column-name})))
-             (time* :Set-vals
-                    @(m.d/let-flow [res-success (-> (fn [[i v :as o]]
-                                                      ;;               (log/warn :Rnum i)
-                                                      (m.s/put! sql-stream o)
-                                                      (let [d (m.s/description sql-stream)]
-                                                        (when (or (>= (d :buffer-size) (d :buffer-capacity)) )
-                                                          (->> (reduce (fn [c _]
-                                                                         (swap! idx inc)
-                                                                         (conj c @(m.s/take! sql-stream)))
-                                                                       [] (range (d :buffer-size)))
-                                                               (set-cells-values! conn base-opts)))))
-                                                    (m.s/consume success-stream))
+             
+             (let [[main-stream
+                    success-stream
+                    fail-stream :as streams]        (js-engine/execute!
+                                                     data                                                 
+                                                     {:columns     columns
+                                                      :code        code
+                                                      :column-type column-type})
 
+                   stream-fail-cb    (-> {"leave-empty" (partial db-set-cell-nil! conn opts)
+                                          "delete-row"  (partial db-remove-row! conn opts)
+                                          "fail"        (partial stop-stream-processing! streams)}
+                                         (error-handling op-spec))
 
-                                    res-fail (m.s/consume fail-fun fail-stream)
-                                    ]
-                       (m.s/close! sql-stream)
-                       (let [c (atom [])]
-                         @(m.s/consume (fn [i]
-                                         (swap! idx inc)
-                                         (swap! c conj i)) sql-stream)
-                         (set-cells-values! conn base-opts @c))                       
-                       (log/info :res [res-success res-fail])))
-             (log/error :IDX @idx)
-             (if-not (m.d/realized? res-error)
-               {:success?      true
-                :execution-log [(format "Derived columns using '%s'" code)]
-                :columns       (conj columns {"title"      column-title
-                                              "type"       column-type
-                                              "sort"       nil
-                                              "hidden"     false
-                                              "direction"  nil
-                                              "columnName" new-column-name})}
-               @res-error)))))
+                   stream-success-cb (partial set-cells-values! conn opts)
+                                
+                   ]
+               (time*
+                :Set-vals
+                @(m.d/zip (->> success-stream
+                               (m.s/batch 8000 300)
+                               (m.s/consume stream-success-cb))
+                          (->> fail-stream
+                               (m.s/consume stream-fail-cb)))))
+
+             
+             {:success?      true
+              :execution-log [(format "Derived columns using '%s'" code)]
+              :columns       (conj columns {"title"      column-title
+                                            "type"       column-type
+                                            "sort"       nil
+                                            "hidden"     false
+                                            "direction"  nil
+                                            "columnName" new-column-name})}))))

@@ -10,6 +10,9 @@
             [akvo.lumen.transformation.engine :as engine]
             [akvo.lumen.utils.logging-config :as logging-config :refer [with-no-logs]]
             [cheshire.core :as json]
+            [manifold.stream :as s]
+            [manifold.bus :as b]
+            [manifold.deferred :as d]
             [clojure.java.io :as io]
             [clojure.test :refer :all]
             [clojure.tools.logging :as log]
@@ -27,14 +30,14 @@
 
 (use-fixtures :once tenant-conn-fixture error-tracker-fixture)
 
-(deftest op-validation
+#_(deftest op-validation
   (testing "op validation"
     (is (= true (every? true? (map engine/valid? ops))))
     (let [result (tf/validate {:type :transformation :transformation (second invalid-op)})]
       (is (= false (:valid? result)))
       (is (= (format "Invalid transformation %s" (second invalid-op)) (:message result))))))
 
-(deftest ^:functional test-transformations
+#_(deftest ^:functional test-transformations
   (testing "Transformation application"
     (is (= [::lib/bad-request {"message" "Dataset not found"}]
            (tf/apply *tenant-conn* "Not-valid-id" []))))
@@ -47,7 +50,7 @@
                                                               :transformation transformation})))]
       (is (= ::lib/ok tag)))))
 
-(deftest ^:functional test-import-and-transform
+#_(deftest ^:functional test-import-and-transform
   (testing "Import CSV and transform"
     (let [t-log [{"op" "core/trim"
                   "args" {"columnName" "c5"}
@@ -81,7 +84,7 @@
                                                                     :table-name table-name}))))
           (is (= 1 (:total (get-row-count *tenant-conn* {:table-name table-name})))))))))
 
-(deftest ^:functional test-undo
+#_(deftest ^:functional test-undo
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "GDP.csv" {:dataset-name "GDP Undo Test"})
         {previous-table-name :table-name} (latest-dataset-version-by-dataset-id *tenant-conn*
                                                                                 {:dataset-id dataset-id})
@@ -122,7 +125,7 @@
                                          :column-name "c1"
                                          :table-name table-name}))))))))
 
-(deftest ^:functional combine-transformation-test
+#_(deftest ^:functional combine-transformation-test
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "name.csv" {:has-column-headers? true})
         apply-transformation (partial tf/apply *tenant-conn* dataset-id)]
     (let [[tag _] (apply-transformation {:type :transformation
@@ -150,7 +153,7 @@
                             "parseFormat" format}
                     "onError" "fail"}})
 
-(deftest ^:functional date-parsing-test
+#_(deftest ^:functional date-parsing-test
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "dates.csv" {:has-column-headers? true})
         apply-transformation (partial tf/apply *tenant-conn* dataset-id)]
     (let [[tag {:strs [datasetId]}] (do (apply-transformation (date-transformation "c1" "YYYY"))
@@ -207,7 +210,7 @@
        (get-data-rnums *tenant-conn* {:table-name table-name :rnums rnums})
        (get-data *tenant-conn* {:table-name table-name})))))
 
-(deftest ^:functional derived-column-test
+#_(deftest ^:functional derived-column-test
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "derived-column.csv" {:has-column-headers? true})
         apply-transformation (partial tf/apply *tenant-conn* dataset-id)]
     (with-no-logs
@@ -335,7 +338,7 @@
                                             "onError" "fail"}))]
         (is (= tag ::lib/bad-request))))))
 
-(deftest ^:functional delete-column-test
+#_(deftest ^:functional delete-column-test
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "dates.csv" {:has-column-headers? true})
         apply-transformation (partial tf/apply *tenant-conn* dataset-id)]
     (let [[tag _] (apply-transformation {:type :transformation
@@ -350,7 +353,7 @@
           (is (= "c2" (get before "columnName")))
           (is (nil? after)))))))
 
-(deftest ^:functional rename-column-test
+#_(deftest ^:functional rename-column-test
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "dates.csv" {:has-column-headers? true})
         apply-transformation (partial tf/apply *tenant-conn* dataset-id)]
     (let [[tag _] (apply-transformation {:type :transformation
@@ -367,7 +370,7 @@
           (is (= "New Title" (get after "title"))))))))
 
 ;; Regression #808
-(deftest valid-column-names
+#_(deftest valid-column-names
   (is (engine/valid? {"op" "core/sort-column"
                       "args" {"columnName" "submitted_at"
                               "sortDirection" "ASC"}
@@ -383,7 +386,7 @@
     "d2" [{"columnName" "d1"}]
     "d6" [{"columnName" "submitter"} {"columnName" "d5"} {"columnName" "dx"}]))
 
-(deftest ^:functional generate-geopoints-test
+#_(deftest ^:functional generate-geopoints-test
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "geopoints.csv" {:has-column-headers? true})
         apply-transformation (partial tf/apply *tenant-conn* dataset-id)]
     (let [[tag _] (apply-transformation {:type :transformation
@@ -398,7 +401,6 @@
         (is (= 4 (count columns)))
         (is (= "geopoint" (get (last columns) "type")))
         (is (= "d1" (get (last columns) "columnName")))))))
-
 
 (deftest ^:functional big-dataset-3K-test
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "2014_us_cities.csv" {:has-column-headers? true})
@@ -453,3 +455,130 @@
              (vec (take 6 (map :d1 (latest-data dataset-id [1 2 3 1001 1002 1003])))))))
 
 ))
+
+
+#_(deftest mani-test
+  (log/error "testing")
+
+  (println (time  (let [n 100000
+                                   data (shuffle (take n (cycle [:true :false])))
+                                   _ (println data)
+                                        ;s-col (take (/ n 2) (repeat :true))
+                                        ;f-col (take (/ n 2) (repeat :false))
+                                        ;        data (into f-col s-col)
+                                   s (->> data s/->source )
+                                   s-s (s/stream (/ n 2))
+                                   f-s (s/stream (/ n 2))
+                                   c-s (s/stream (/ n 2))
+                                   jor (atom [])
+                                   c (atom 0)
+                                   consumption (s/consume (fn [i]
+                                                            (swap! c inc)
+                                                            (if (= i :true)
+                                                              (s/put! s-s [i @c])
+                                                              (s/put! f-s [i @c] ))) s)
+                                   
+                                   s-consumption (s/consume (fn [i]
+                                                              (s/put! c-s i)
+                                                              #_(println :before (:pending-puts (s/description c-s)))
+                                                              (when (<= 8 (:pending-puts (s/description c-s)))
+                                                                (do
+                                                                  #_(println :inside)
+                                                                  (doseq [idx (range 8)]
+                                                                    (swap! jor conj (s/take! c-s)))
+                                                                  #_(println :after (:pending-puts (s/description c-s)))
+                                                                  ))) s-s)
+                                   c-consumption (s/consume (fn [i]
+                                                              #_(println "JOSOSOS" i)
+                                                              (swap! jor conj i)
+                                                              ) c-s)
+                                   
+                                   ]
+                               
+                               @consumption
+
+                               (s/close! s-s)
+
+                               @s-consumption
+                               (s/close! c-s)
+                               #_(println :c-s (s/description c-s))
+                               @c-consumption
+
+                               #_(println :c-s (s/description c-s))
+                               #_(println  @jor)
+                               (is (= (/ n 2)  (count @jor)))
+
+                               (is (= (/ n 2) (:buffer-size (s/description f-s))))
+
+                               )))
+  
+  )
+(comment 
+  (def s (s/stream))
+  (s/put! s :hola)
+  (s/drained? s)
+  (s/close! s)
+  (s/consume (fn [i] (println i)) s)
+  (def g (shuffle (take 40 (cycle [:one :two]))))
+  (def f (shuffle (take 40 (cycle [:true :false]))))
+  (count (filter (partial = :true) f))
+  (count (filter (partial = :false) f))
+
+  (def f1-s (s/stream 10))
+  (def f2-s (s/stream 10))
+  
+  (def z1 (s/zip f1-s f2-s))
+  z1
+  @(s/put-all! f1-s (range 10 20))
+
+  (def b (s/batch 3 10 f1-s))
+;;  (s/close! b)
+;;  (s/take! b) 
+  
+  @(s/put-all! f2-s (range 20 30))
+  (s/take! z1)
+  (def a-s (s/stream))
+  (def b-s (s/stream))
+  (def c-s (s/stream))
+  (s/connect a-s b-s)
+  (s/connect c-s b-s)
+  (s/put! a-s nil)
+  (s/put! a-s :b)
+  (s/put! c-s :2)
+  (s/close! a-s)
+  (s/close! a-s)
+  ;;  (s/connect f-s a-s)
+  (s/description a-s)
+  (s/take! a-s)
+  (s/description b-s)
+  r
+  )
+
+(comment
+(defn send! [dst inputs]
+  (let [items (map #(vector % (d/deferred)) inputs)]
+    (-> (s/put-all! dst items)
+        (d/chain
+          (fn [result]
+            (when result
+              (apply d/zip (map last items))))
+          (fn [_] :done)))))
+
+(defn consume! [cb src]
+  (->> src
+       (s/batch 3 100)
+       (s/consume
+         (fn [vs]
+           (cb (map first vs))
+           (doseq [d (map second vs)]
+             (d/success! d :done))))))
+
+(do
+  (def s (s/stream))
+  (def res (send! s [1 2 3 4 5]))
+  (def c (consume! #(println "got" %) s))
+  @(d/chain res #(println "DONE" %)))
+
+
+
+  )
