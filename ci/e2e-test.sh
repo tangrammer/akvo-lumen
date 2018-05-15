@@ -5,7 +5,8 @@ DOCKER_COMPOSE_PROJECT=${2:-akvolumen}
 LUMEN_URL=${3:-http://t1.lumen.local:3030/}
 LUMEN_USER=${4:-jerome}
 LUMEN_PASSWORD=${5:-password}
-
+LUMEN-JS-ENGINE-MAX-MEMORY=${6:-2048000000}
+LUMEN-JS-ENGINE-MAX-TIME=${7:-2000}
 docker run --interactive --tty --shm-size 1G --network="${DOCKER_COMPOSE_PROJECT}_default" \
        -e LUMEN_URL="${LUMEN_URL}" -e LUMEN_USER="${LUMEN_USER}" -e LUMEN_PASSWORD="${LUMEN_PASSWORD}" \
        --volume "$PWD/client/e2e-test/${SCRIPT}.js":/app/index.js --link "${DOCKER_COMPOSE_PROJECT}_client_1:t1.lumen.local" \
