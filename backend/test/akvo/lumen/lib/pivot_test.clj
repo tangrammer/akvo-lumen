@@ -3,14 +3,14 @@
                                          tenant-conn-fixture
                                          *error-tracker*
                                          error-tracker-fixture]]
+            [akvo.lumen.utils.specs]
             [akvo.lumen.lib :as lib]
             [akvo.lumen.lib.aggregation :as aggregation]
-            [akvo.lumen.test-utils :refer [import-file]]
+            [akvo.lumen.test-utils :refer [import-file instrument-fixture with-instrument-disabled]]
             [akvo.lumen.transformation :as tf]
             [clojure.test :refer :all]))
 
-
-(use-fixtures :once tenant-conn-fixture error-tracker-fixture)
+(use-fixtures :once tenant-conn-fixture error-tracker-fixture instrument-fixture)
 
 (deftest ^:functional test-pivot
   (let [dataset-id (import-file *tenant-conn* *error-tracker* "pivot.csv" {:dataset-name "pivot"

@@ -14,6 +14,4 @@
 (s/def ::db (s/keys :req-un [::datasource]
 		    :opt-un [::uri]))
 
-(s/def ::dataset-id string?)
-
 (s/def ::tenant-connection ::spec)
