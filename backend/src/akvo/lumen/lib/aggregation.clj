@@ -2,17 +2,20 @@
   (:require [akvo.lumen.lib :as lib]
             [akvo.lumen.lib.aggregation.pie :as pie]
             [akvo.lumen.lib.aggregation.pivot :as pivot]
+            [akvo.lumen.specs.db :as db.s]
+            [akvo.lumen.specs.dataset :as dataset.s]
             [clojure.java.jdbc :as jdbc]
+            [clojure.walk :as w]
             [hugsql.core :as hugsql]))
 
 (hugsql/def-db-fns "akvo/lumen/lib/dataset.sql")
 
 (defmulti query*
-  (fn [tenant-conn dataset visualisation-type query]
+  (fn [{:keys [::db.s/tenant-connection ::dataset.s/dataset ::visualisation-type query]}]
     visualisation-type))
 
 (defmethod query* :default
-  [tenant-conn dataset visualisation-type query]
+  [{:keys [::db.s/tenant-connection ::dataset.s/dataset ::visualisation-type query]}]
   (lib/bad-request {"message" "Unsupported visualisation type"
                     "visualisationType" visualisation-type
                     "query" query}))
@@ -21,20 +24,23 @@
   (jdbc/with-db-transaction [tenant-tx-conn tenant-conn {:read-only? true}]
     (if-let [dataset (dataset-by-id tenant-tx-conn {:id dataset-id})]
       (try
-        (query* tenant-tx-conn dataset visualisation-type query)
+        (query* {::db.s/tenant-connection tenant-tx-conn
+                 ::dataset.s/dataset (w/keywordize-keys dataset)
+                 ::visualisation-type visualisation-type
+                 :query (w/keywordize-keys query)})
         (catch clojure.lang.ExceptionInfo e
           (lib/bad-request (merge {:message (.getMessage e)}
                                   (ex-data e)))))
       (lib/not-found {"datasetId" dataset-id}))))
 
 (defmethod query* "pivot"
-  [tenant-conn dataset _ query]
-  (pivot/query tenant-conn dataset query))
+  [{:keys [::db.s/tenant-connection ::dataset.s/dataset ::visualisation-type query]}]
+  (pivot/query tenant-connection dataset query))
 
 (defmethod query* "pie"
-  [tenant-conn dataset _ query]
-  (pie/query tenant-conn dataset query))
+  [{:keys [::db.s/tenant-connection ::dataset.s/dataset ::visualisation-type query]}]
+  (pie/query tenant-connection dataset query))
 
 (defmethod query* "donut"
-  [tenant-conn dataset _ query]
-  (pie/query tenant-conn dataset query))
+  [{:keys [::db.s/tenant-connection ::dataset.s/dataset ::visualisation-type query]}]
+  (pie/query tenant-connection dataset query))
