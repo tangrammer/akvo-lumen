@@ -71,6 +71,7 @@
 		   ::aggregation.query.s/categoryColumn
 		   ::aggregation.query.s/rowColumn
 		   ::aggregation.query.s/valueColumn]))
+
 (s/def ::l.aggregation.pivot/query-built
   (s/keys :req-un [::l.aggregation.pivot/aggregation]
           :opt-un [::l.aggregation.pivot/category-column
